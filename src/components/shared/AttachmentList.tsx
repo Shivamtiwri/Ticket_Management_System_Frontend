@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import type { Attachment } from '../../types';
+import { fileUrl } from '../../lib/api';
 
 interface AttachmentListProps {
   attachments: Attachment[];
-  /** Compact list style for use inside comment bubbles (no image grid, smaller images) */
+  
   compact?: boolean;
 }
 
@@ -55,7 +56,7 @@ export const AttachmentList: React.FC<AttachmentListProps> = ({ attachments, com
       {images.length > 0 && (
         <div className={`flex flex-wrap gap-2 ${compact ? 'mt-2' : 'mt-3'}`}>
           {images.map((a, i) => {
-            const src = `/uploads/${a.filename}`;
+            const src = fileUrl(`uploads/${a.filename}`);
             const imgSize = compact ? 'h-20 w-20' : 'h-32 w-32';
             return (
               <button
@@ -84,7 +85,7 @@ export const AttachmentList: React.FC<AttachmentListProps> = ({ attachments, com
           {files.map((a, i) => (
             <a
               key={i}
-              href={`/uploads/${a.filename}`}
+              href={fileUrl(`uploads/${a.filename}`)}
               download={a.originalName}
               target="_blank"
               rel="noopener noreferrer"

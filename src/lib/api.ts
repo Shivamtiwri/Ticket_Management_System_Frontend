@@ -3,6 +3,20 @@ import { authService } from '../services/auth.service';
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
+const API_ORIGIN = BASE_URL.replace(/\/api\/?$/, '');
+
+/**
+ * URL for a file stored by the backend (`uploads/abc.png`).
+ * Dev: the Vite proxy serves `/uploads` same-origin, so images are never
+ * blocked by cross-origin resource policy / CORS headers.
+ * Built app: hit the API origin directly (backend sends
+ * `Cross-Origin-Resource-Policy: cross-origin` for `/uploads`).
+ */
+export const fileUrl = (filePath: string): string => {
+  const path = filePath.replace(/^\/+/, '');
+  return import.meta.env.DEV ? `/${path}` : `${API_ORIGIN}/${path}`;
+};
+
 export const apiClient = axios.create({
   baseURL: BASE_URL,
   headers: { 'Content-Type': 'application/json' },
