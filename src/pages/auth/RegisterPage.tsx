@@ -46,7 +46,6 @@ export const RegisterPage: React.FC = () => {
       <div className="w-full max-w-lg">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Ticket Management System</h1>
-          {/* <p className="text-gray-500 mt-1">Create your account</p> */}
         </div>
         <div className="card">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>

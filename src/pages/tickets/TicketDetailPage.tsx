@@ -128,13 +128,11 @@ const Section: React.FC<{
 );
 
 const SectionHeader: React.FC<{
-//   icon: React.ReactNode;
   title: string;
   subtitle?: string;
   accentClass?: string;
 }> = ({ title, subtitle, accentClass = 'from-slate-50 to-gray-50' }) => (
   <div className={`px-5 py-4 bg-gradient-to-r ${accentClass} border-b border-gray-100 flex items-center gap-3`}>
-    {/* <span className="text-lg">{icon}</span> */}
     <div>
       <h2 className="font-semibold text-gray-900 text-sm leading-tight">{title}</h2>
       {subtitle && <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>}
@@ -379,7 +377,6 @@ export const TicketDetailPage: React.FC = () => {
          
           <Section>
             <SectionHeader
-            //   icon="📋"
               title="Description"
               accentClass="from-slate-50 to-gray-50"
             />
@@ -420,7 +417,6 @@ export const TicketDetailPage: React.FC = () => {
                     <div key={c._id} className={`flex gap-3 ${isMe ? 'flex-row-reverse' : ''}`}>
                       <Avatar name={authorName} />
                       <div className={`flex-1 max-w-[85%] ${isMe ? 'items-end flex flex-col' : ''}`}>
-                        {/* meta row */}
                         <div className={`flex items-center gap-2 mb-1 flex-wrap ${isMe ? 'justify-end' : ''}`}>
                           <span className="text-xs font-semibold text-gray-700">{authorName}</span>
                           {isSupport && !c.isInternal && (

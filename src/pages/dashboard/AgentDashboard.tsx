@@ -26,11 +26,6 @@ export const AgentDashboard: React.FC = () => {
         <StatCard label="In Progress" value={stats?.inProgress ?? 0} color="text-yellow-600" />
         <StatCard label="Waiting" value={stats?.waitingForUser ?? 0} color="text-orange-600" />
         <StatCard label="Resolved" value={stats?.resolved ?? 0} color="text-green-600" />
-         {/* <StatCard
-                  label="Total Category"
-                  value={stats?.total_category ?? 0}
-                  color="text-green-500"
-                /> */}
       </div>
 
       <div className="card">

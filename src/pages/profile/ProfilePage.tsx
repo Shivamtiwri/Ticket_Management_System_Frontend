@@ -12,7 +12,6 @@ import { getAxiosErrorMessage } from '../../lib/utils';
 import { Spinner } from '../../components/shared/Spinner';
 import { PasswordInput } from '../../components/shared/PasswordInput';
 
-/* ── Schemas ──────────────────────────────────────────────────────────────── */
 const profileSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   phone: z.string().optional(),
@@ -35,7 +34,6 @@ const passwordSchema = z
   });
 type PasswordForm = z.infer<typeof passwordSchema>;
 
-/* ── Helpers ──────────────────────────────────────────────────────────────── */
 const ROLE_STYLE: Record<string, string> = {
   ADMIN:    'bg-red-100 text-red-700',
   AGENT:    'bg-purple-100 text-purple-700',
@@ -51,7 +49,6 @@ const getInitials = (name: string) =>
 
 const avatarBg = (role: string) => ROLE_STYLE[role] ?? 'bg-gray-100 text-gray-600';
 
-/* ── Field component ──────────────────────────────────────────────────────── */
 const Field: React.FC<{
   label: string;
   error?: string;
@@ -64,18 +61,15 @@ const Field: React.FC<{
   </div>
 );
 
-/* ── Component ────────────────────────────────────────────────────────────── */
 export const ProfilePage: React.FC = () => {
   const { user: authUser } = useAuth();
   const [activeTab, setActiveTab] = useState<'profile' | 'password'>('profile');
 
-  /* fetch full user details */
   const { data: fullUser, isLoading } = useQuery({
     queryKey: ['me'],
     queryFn: () => authService.getMe(),
   });
 
-  /* ── Profile form ─────────────────────────────────────────────────────── */
   const {
     register: regProfile,
     handleSubmit: submitProfile,
@@ -86,7 +80,6 @@ export const ProfilePage: React.FC = () => {
     defaultValues: { name: '', phone: '', department: '' },
   });
 
-  /* populate form when data arrives */
   useEffect(() => {
     if (fullUser) {
       resetProfile({
@@ -103,7 +96,6 @@ export const ProfilePage: React.FC = () => {
     onError: (err) => toast.error(getAxiosErrorMessage(err)),
   });
 
-  /* ── Password form ────────────────────────────────────────────────────── */
   const {
     register: regPass,
     handleSubmit: submitPass,
@@ -123,7 +115,6 @@ export const ProfilePage: React.FC = () => {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
 
-      {/* ── Profile header card ────────────────────────────────────────── */}
       <div className="card flex items-center gap-5">
         {isLoading ? (
           <div className="flex items-center gap-4">
@@ -135,12 +126,10 @@ export const ProfilePage: React.FC = () => {
           </div>
         ) : (
           <>
-            {/* Avatar */}
             <span className={`inline-flex items-center justify-center w-16 h-16 rounded-full text-2xl font-bold flex-shrink-0 ${avatarBg(role)}`}>
               {getInitials(authUser?.name ?? '')}
             </span>
 
-            {/* Info */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="text-xl font-bold text-gray-900 truncate">
@@ -170,9 +159,7 @@ export const ProfilePage: React.FC = () => {
         )}
       </div>
 
-      {/* ── Tabs + forms ──────────────────────────────────────────────── */}
       <div className="card p-0 overflow-hidden">
-        {/* Tab bar */}
         <div className="flex border-b border-gray-200">
           {(['profile', 'password'] as const).map((tab) => (
             <button
@@ -190,7 +177,6 @@ export const ProfilePage: React.FC = () => {
         </div>
 
         <div className="p-6">
-          {/* ── Edit profile ─────────────────────────────────────────── */}
           {activeTab === 'profile' && (
             isLoading ? (
               <div className="flex justify-center py-10"><Spinner /></div>
@@ -252,7 +238,6 @@ export const ProfilePage: React.FC = () => {
             )
           )}
 
-          {/* ── Change password ───────────────────────────────────────── */}
           {activeTab === 'password' && (
             <form
               onSubmit={submitPass((d) => passwordMutation.mutate(d))}

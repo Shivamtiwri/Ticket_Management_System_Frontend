@@ -27,7 +27,6 @@ export const AdminDashboard: React.FC = () => {
         Admin Dashboard
       </h1>
 
-      {/* Statistics */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard
           label="Total"
@@ -155,7 +154,6 @@ export const AdminDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Users by Role */}
       <div className="card">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
           Users by Role

@@ -9,11 +9,9 @@ import { Spinner } from '../../components/shared/Spinner';
 import { ConfirmDialog } from '../../components/shared/ConfirmDialog';
 import { getAxiosErrorMessage } from '../../lib/utils';
 
-/* ── Helpers ──────────────────────────────────────────────────────────────── */
 const getInitials = (name: string) =>
   name.split(' ').slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('');
 
-/* ── Component ────────────────────────────────────────────────────────────── */
 export const AgentsPage: React.FC = () => {
   const qc = useQueryClient();
   const [page, setPage] = useState(1);
@@ -59,7 +57,6 @@ export const AgentsPage: React.FC = () => {
 
   return (
     <div className="space-y-5">
-      {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Support Agents</h1>
@@ -77,7 +74,6 @@ export const AgentsPage: React.FC = () => {
         )}
       </div>
 
-      {/* Search */}
       <div className="card p-4">
         <div className="flex flex-wrap gap-3 items-end">
           <form onSubmit={handleSearch} className="flex gap-2">
@@ -98,7 +94,6 @@ export const AgentsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Table */}
       <div className="card p-0 overflow-hidden">
         {isLoading ? (
           <div className="flex justify-center py-16"><Spinner /></div>
@@ -128,7 +123,6 @@ export const AgentsPage: React.FC = () => {
                 <tbody className="divide-y divide-gray-100">
                   {agents.map((agent) => (
                     <tr key={agent._id} className="hover:bg-gray-50 transition-colors">
-                      {/* Agent cell — avatar + name + email */}
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           <span className="inline-flex items-center justify-center w-9 h-9 rounded-full text-sm font-bold flex-shrink-0 bg-purple-100 text-purple-700">
@@ -141,7 +135,6 @@ export const AgentsPage: React.FC = () => {
                         </div>
                       </td>
 
-                      {/* Department */}
                       <td className="px-4 py-3">
                         {agent.department ? (
                           <span className="badge bg-gray-100 text-gray-600">{agent.department}</span>
@@ -150,7 +143,6 @@ export const AgentsPage: React.FC = () => {
                         )}
                       </td>
 
-                      {/* Status */}
                       <td className="px-4 py-3">
                         <span className={`inline-flex items-center gap-1.5 badge ${
                           agent.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
@@ -160,7 +152,6 @@ export const AgentsPage: React.FC = () => {
                         </span>
                       </td>
 
-                      {/* Last Login */}
                       <td className="px-4 py-3 text-xs tabular-nums">
                         {agent.lastLogin ? (
                           <span
@@ -174,12 +165,10 @@ export const AgentsPage: React.FC = () => {
                         )}
                       </td>
 
-                      {/* Joined */}
                       <td className="px-4 py-3 text-gray-400 text-xs tabular-nums">
                         {format(new Date(agent.createdAt), 'MMM d, yyyy')}
                       </td>
 
-                      {/* Actions */}
                       <td className="px-4 py-3">
                         <div className="flex justify-end">
                           <button

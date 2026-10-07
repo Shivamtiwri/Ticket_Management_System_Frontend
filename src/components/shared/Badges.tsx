@@ -2,7 +2,6 @@ import React from 'react';
 import { TicketStatus, TicketPriority } from '../../types';
 import { formatStatus } from '../../lib/utils';
 
-/* ── StatusBadge ───────────────────────────────────────────────────────────── */
 const STATUS_CONFIG: Record<TicketStatus, { icon: string; classes: string }> = {
   OPEN:             { icon: '◉', classes: 'bg-blue-100 text-blue-700 ring-1 ring-blue-200' },
   ASSIGNED:         { icon: '◎', classes: 'bg-violet-100 text-violet-700 ring-1 ring-violet-200' },
@@ -22,7 +21,6 @@ export const StatusBadge: React.FC<{ status: TicketStatus }> = ({ status }) => {
   );
 };
 
-/* ── PriorityBadge ─────────────────────────────────────────────────────────── */
 const PRIORITY_CONFIG: Record<TicketPriority, { icon: string; classes: string }> = {
   LOW:      { icon: '▽', classes: 'bg-slate-100 text-slate-600 ring-1 ring-slate-200' },
   MEDIUM:   { icon: '◈', classes: 'bg-yellow-100 text-yellow-700 ring-1 ring-yellow-200' },

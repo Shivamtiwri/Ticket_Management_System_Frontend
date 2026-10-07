@@ -23,11 +23,6 @@ export const authService = {
     return data.data;
   },
 
-  /**
-   * Exchange the httpOnly refresh-token cookie for a new access token.
-   * The cookie is sent automatically by the browser (withCredentials: true).
-   * Returns the new access token and user info on success, null on failure.
-   */
   async refresh(): Promise<{ token: string; user: AuthUser } | null> {
     try {
       const { data } = await apiClient.post<ApiResponse<{ token: string; user: AuthUser }>>(

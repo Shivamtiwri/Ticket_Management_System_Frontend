@@ -1,4 +1,3 @@
-﻿// Removed: only Register, Login and Dashboard functionality is kept in this file.
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';

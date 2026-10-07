@@ -1,4 +1,3 @@
-﻿// Removed: only Register, Login and Dashboard functionality is kept in this file.
 import React from 'react';
 import type { Pagination as PaginationData } from '../../types';
 

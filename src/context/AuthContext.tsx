@@ -18,7 +18,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  /* ── initialise from localStorage on mount ─────────────────────────── */
   useEffect(() => {
     const token = localStorage.getItem('token');
     const savedUser = localStorage.getItem('user');
@@ -33,15 +32,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(false);
   }, []);
 
-  /* ── listen for events fired by the axios interceptor ──────────────── */
   useEffect(() => {
-    // Interceptor silently refreshed the token — keep state in sync
     const handleRefresh = (e: Event) => {
       const { user: refreshedUser } = (e as CustomEvent<{ token: string; user: AuthUser }>).detail;
       setUser(refreshedUser);
     };
 
-    // Interceptor gave up (refresh failed) — force logout state
     const handleLogout = () => {
       setUser(null);
     };
@@ -55,7 +51,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  /* ── auth actions ───────────────────────────────────────────────────── */
   const login = useCallback(async (credentials: LoginCredentials) => {
     const result = await authService.login(credentials);
     localStorage.setItem('token', result!.token);
@@ -74,7 +69,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await authService.logout();
     } catch {
-      // ignore server-side errors on logout
     }
     localStorage.removeItem('token');
     localStorage.removeItem('user');

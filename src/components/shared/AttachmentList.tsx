@@ -12,7 +12,6 @@ function isImage(mimetype: string): boolean {
   return mimetype.startsWith('image/');
 }
 
-/** Full-screen lightbox for previewing an image */
 const Lightbox: React.FC<{ src: string; alt: string; onClose: () => void }> = ({ src, alt, onClose }) => (
   <div
     className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
@@ -79,7 +78,6 @@ export const AttachmentList: React.FC<AttachmentListProps> = ({ attachments, com
         </div>
       )}
 
-      {/* Non-image file links */}
       {files.length > 0 && (
         <div className={`flex flex-wrap gap-1.5 ${images.length > 0 ? 'mt-2' : compact ? 'mt-2' : 'mt-3'}`}>
           {files.map((a, i) => (
@@ -99,7 +97,6 @@ export const AttachmentList: React.FC<AttachmentListProps> = ({ attachments, com
         </div>
       )}
 
-      {/* Lightbox */}
       {lightboxSrc && (
         <Lightbox
           src={lightboxSrc}
@@ -111,7 +108,6 @@ export const AttachmentList: React.FC<AttachmentListProps> = ({ attachments, com
   );
 };
 
-/** Small icon hinting at the file type */
 const FileIcon: React.FC<{ mimetype: string }> = ({ mimetype }) => {
   if (mimetype === 'application/pdf') return <span aria-hidden="true">📄</span>;
   if (mimetype.startsWith('text/')) return <span aria-hidden="true">📝</span>;

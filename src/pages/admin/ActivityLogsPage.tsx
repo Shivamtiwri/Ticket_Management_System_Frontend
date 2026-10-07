@@ -7,7 +7,6 @@ import { Pagination } from '../../components/shared/Pagination';
 import { Spinner } from '../../components/shared/Spinner';
 import type { ActivityLog } from '../../types';
 
-/* ── Action colour map ────────────────────────────────────────────────────── */
 type ActionMeta = { label: string; dot: string; badge: string };
 
 const ACTION_META: Record<string, ActionMeta> = {
@@ -33,7 +32,6 @@ const DEFAULT_META: ActionMeta = { label: 'Action', dot: 'bg-gray-400', badge: '
 const getMeta = (action: string): ActionMeta =>
   ACTION_META[action] ?? { ...DEFAULT_META, label: action.replace(/_/g, ' ') };
 
-/* ── Actor avatar ─────────────────────────────────────────────────────────── */
 const ROLE_AVATAR_BG: Record<string, string> = {
   ADMIN:    'bg-red-100 text-red-700',
   AGENT:    'bg-purple-100 text-purple-700',
@@ -54,7 +52,6 @@ const ActorAvatar: React.FC<{ name: string; role: string }> = ({ name, role }) =
   );
 };
 
-/* ── Single log row ───────────────────────────────────────────────────────── */
 const LogRow: React.FC<{ log: ActivityLog; isLast: boolean }> = ({ log, isLast }) => {
   const meta = getMeta(log.action);
   const actor = typeof log.actor === 'object' ? log.actor : null;
@@ -64,26 +61,21 @@ const LogRow: React.FC<{ log: ActivityLog; isLast: boolean }> = ({ log, isLast }
 
   return (
     <div className="relative flex gap-4 px-5 py-4 group hover:bg-gray-50 transition-colors">
-      {/* timeline spine */}
       {!isLast && (
         <span className="absolute left-[2.35rem] top-10 bottom-0 w-px bg-gray-100 group-hover:bg-gray-200 transition-colors" />
       )}
 
-      {/* dot */}
       <div className="relative flex-shrink-0 flex flex-col items-center mt-0.5">
         <span className={`w-3 h-3 rounded-full ${meta.dot} ring-2 ring-white`} />
       </div>
 
-      {/* content */}
       <div className="flex-1 min-w-0">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="flex items-center gap-2 flex-wrap">
-            {/* action badge */}
             <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${meta.badge}`}>
               {meta.label}
             </span>
 
-            {/* ticket link */}
             {log.ticket && (
               <Link
                 to={`/tickets/${log.ticket.ticketId}`}
@@ -94,7 +86,6 @@ const LogRow: React.FC<{ log: ActivityLog; isLast: boolean }> = ({ log, isLast }
             )}
           </div>
 
-          {/* timestamp */}
           <time
             dateTime={log.createdAt}
             className="text-xs text-gray-400 flex-shrink-0 tabular-nums"
@@ -104,10 +95,8 @@ const LogRow: React.FC<{ log: ActivityLog; isLast: boolean }> = ({ log, isLast }
           </time>
         </div>
 
-        {/* description */}
         <p className="mt-1 text-sm text-gray-800 leading-snug">{log.description}</p>
 
-        {/* actor */}
         <div className="mt-2 flex items-center gap-1.5">
           <ActorAvatar name={actorName} role={actorRole} />
           <span className="text-xs text-gray-500">
@@ -124,7 +113,6 @@ const LogRow: React.FC<{ log: ActivityLog; isLast: boolean }> = ({ log, isLast }
   );
 };
 
-/* ── Main page ────────────────────────────────────────────────────────────── */
 const ACTION_OPTIONS = Object.keys(ACTION_META);
 
 export const ActivityLogsPage: React.FC = () => {
@@ -162,7 +150,6 @@ export const ActivityLogsPage: React.FC = () => {
 
   return (
     <div className="space-y-5">
-      {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Activity Logs</h1>
@@ -175,10 +162,8 @@ export const ActivityLogsPage: React.FC = () => {
         )}
       </div>
 
-      {/* Filters */}
       <div className="card p-4">
         <div className="flex flex-wrap gap-3 items-end">
-          {/* Search */}
           <form onSubmit={handleSearch} className="flex gap-2">
             <input
               type="search"
@@ -192,7 +177,6 @@ export const ActivityLogsPage: React.FC = () => {
             </button>
           </form>
 
-          {/* Action filter */}
           <div className="flex flex-col gap-1">
             <label className="label text-xs">Filter by action</label>
             <select
@@ -207,7 +191,6 @@ export const ActivityLogsPage: React.FC = () => {
             </select>
           </div>
 
-          {/* Clear */}
           {hasFilters && (
             <button onClick={clearFilters} className="btn-secondary text-sm px-3 py-2 self-end">
               Clear filters
@@ -215,7 +198,6 @@ export const ActivityLogsPage: React.FC = () => {
           )}
         </div>
 
-        {/* Active filter chips */}
         {hasFilters && (
           <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-100">
             {action && (
@@ -234,7 +216,6 @@ export const ActivityLogsPage: React.FC = () => {
         )}
       </div>
 
-      {/* Timeline card */}
       <div className="card p-0 overflow-hidden">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3 text-gray-400">
@@ -252,7 +233,6 @@ export const ActivityLogsPage: React.FC = () => {
           </div>
         ) : (
           <>
-            {/* Column headings */}
             <div className="flex items-center gap-4 px-5 py-2.5 bg-gray-50 border-b border-gray-100 text-xs font-semibold text-gray-500 uppercase tracking-wide">
               <span className="w-3" />
               <span className="flex-1">Event</span>

@@ -10,7 +10,6 @@ import { ConfirmDialog } from '../../components/shared/ConfirmDialog';
 import { Modal } from '../../components/shared/Modal';
 import { getAxiosErrorMessage } from '../../lib/utils';
 
-/* ── Helpers ──────────────────────────────────────────────────────────────── */
 const ROLE_STYLE: Record<UserRole, string> = {
   [UserRole.ADMIN]:    'bg-red-100 text-red-700',
   [UserRole.AGENT]:    'bg-purple-100 text-purple-700',
@@ -28,7 +27,6 @@ const avatarBg = (role: UserRole) => ROLE_STYLE[role] ?? 'bg-gray-100 text-gray-
 const getInitials = (name: string) =>
   name.split(' ').slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('');
 
-/* ── Component ────────────────────────────────────────────────────────────── */
 export const UsersPage: React.FC = () => {
   const qc = useQueryClient();
   const [page, setPage] = useState(1);
@@ -82,7 +80,6 @@ export const UsersPage: React.FC = () => {
 
   return (
     <div className="space-y-5">
-      {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
@@ -95,7 +92,6 @@ export const UsersPage: React.FC = () => {
         )}
       </div>
 
-      {/* Filters */}
       <div className="card p-4">
         <div className="flex flex-wrap gap-3 items-end">
           <form onSubmit={handleSearch} className="flex gap-2">
@@ -131,7 +127,6 @@ export const UsersPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Table */}
       <div className="card p-0 overflow-hidden">
         {isLoading ? (
           <div className="flex justify-center py-16"><Spinner /></div>
@@ -160,7 +155,6 @@ export const UsersPage: React.FC = () => {
                 <tbody className="divide-y divide-gray-100">
                   {users.map((u) => (
                     <tr key={u._id} className="hover:bg-gray-50 transition-colors">
-                      {/* User cell — avatar + name + email */}
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           <span className={`inline-flex items-center justify-center w-9 h-9 rounded-full text-sm font-bold flex-shrink-0 ${avatarBg(u.role)}`}>
@@ -173,14 +167,12 @@ export const UsersPage: React.FC = () => {
                         </div>
                       </td>
 
-                      {/* Role */}
                       <td className="px-4 py-3">
                         <span className={`badge ${ROLE_STYLE[u.role]}`}>
                           {ROLE_LABEL[u.role]}
                         </span>
                       </td>
 
-                      {/* Status */}
                       <td className="px-4 py-3">
                         <span className={`inline-flex items-center gap-1.5 badge ${
                           u.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
@@ -190,12 +182,10 @@ export const UsersPage: React.FC = () => {
                         </span>
                       </td>
 
-                      {/* Joined */}
                       <td className="px-4 py-3 text-gray-400 text-xs tabular-nums">
                         {format(new Date(u.createdAt), 'MMM d, yyyy')}
                       </td>
 
-                      {/* Actions */}
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-2">
                           <button
@@ -226,7 +216,6 @@ export const UsersPage: React.FC = () => {
         )}
       </div>
 
-      {/* Confirm toggle */}
       <ConfirmDialog
         isOpen={!!toggleTarget}
         onClose={() => setToggleTarget(null)}
@@ -238,7 +227,6 @@ export const UsersPage: React.FC = () => {
         isLoading={toggleMutation.isPending}
       />
 
-      {/* Change role modal */}
       <Modal isOpen={!!roleTarget} onClose={() => setRoleTarget(null)} title={`Update Role — ${roleTarget?.name}`} size="sm">
         <div className="space-y-4">
           <div>
