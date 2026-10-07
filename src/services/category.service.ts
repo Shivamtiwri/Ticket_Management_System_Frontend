@@ -1,4 +1,7 @@
-﻿// Removed: only Register, Login and Dashboard functionality is kept in this file.
+﻿
+
+
+
 import apiClient from '../lib/api';
 import type { ApiResponse, Category } from '../types';
 

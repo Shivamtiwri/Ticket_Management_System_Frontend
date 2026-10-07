@@ -6,6 +6,7 @@ import { z } from 'zod';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import { getAxiosErrorMessage } from '../../lib/utils';
+import { PasswordInput } from '../../components/shared/PasswordInput';
 
 const schema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -63,8 +64,8 @@ export const RegisterPage: React.FC = () => {
             </div>
             <div>
               <label className="label" htmlFor="password">Password</label>
-              <input id="password" type="password" autoComplete="new-password" {...register('password')}
-                className={errors.password ? 'input-error' : 'input'} placeholder="Enter password" />
+              <PasswordInput id="password" autoComplete="new-password" {...register('password')}
+                hasError={!!errors.password} placeholder="Enter password" />
               {errors.password && <p className="mt-1 text-xs text-red-600">{errors.password.message}</p>}
             </div>
             <div>

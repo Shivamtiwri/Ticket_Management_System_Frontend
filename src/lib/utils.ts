@@ -1,25 +1,26 @@
 import { TicketStatus, TicketPriority } from '../types';
 
+
 export const getStatusColor = (status: TicketStatus): string => {
   const map: Record<TicketStatus, string> = {
-    OPEN: 'bg-blue-100 text-blue-800',
-    ASSIGNED: 'bg-purple-100 text-purple-800',
-    IN_PROGRESS: 'bg-yellow-100 text-yellow-800',
-    WAITING_FOR_USER: 'bg-orange-100 text-orange-800',
-    RESOLVED: 'bg-green-100 text-green-800',
-    CLOSED: 'bg-gray-100 text-gray-600',
+    OPEN:             'bg-blue-100 text-blue-700',
+    ASSIGNED:         'bg-violet-100 text-violet-700',
+    IN_PROGRESS:      'bg-amber-100 text-amber-700',
+    WAITING_FOR_USER: 'bg-orange-100 text-orange-700',
+    RESOLVED:         'bg-emerald-100 text-emerald-700',
+    CLOSED:           'bg-gray-100 text-gray-500',
   };
-  return map[status] || 'bg-gray-100 text-gray-600';
+  return map[status] ?? 'bg-gray-100 text-gray-600';
 };
 
 export const getPriorityColor = (priority: TicketPriority): string => {
   const map: Record<TicketPriority, string> = {
-    LOW: 'bg-green-100 text-green-800',
-    MEDIUM: 'bg-yellow-100 text-yellow-800',
-    HIGH: 'bg-orange-100 text-orange-800',
-    CRITICAL: 'bg-red-100 text-red-800',
+    LOW:      'bg-slate-100 text-slate-600',
+    MEDIUM:   'bg-yellow-100 text-yellow-700',
+    HIGH:     'bg-orange-100 text-orange-700',
+    CRITICAL: 'bg-red-100 text-red-700',
   };
-  return map[priority] || 'bg-gray-100 text-gray-600';
+  return map[priority] ?? 'bg-gray-100 text-gray-600';
 };
 
 export const formatStatus = (status: string): string =>

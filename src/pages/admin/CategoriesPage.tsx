@@ -1,4 +1,4 @@
-﻿// Removed: only Register, Login and Dashboard functionality is kept in this file.
+﻿
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
@@ -155,7 +155,7 @@ export const CategoriesPage: React.FC = () => {
                 )}
             </div>
 
-            {/* Create / Edit Modal */}
+            
             <Modal
                 isOpen={showModal || !!editing}
                 onClose={() => { setShowModal(false); setEditing(null); }}

@@ -18,6 +18,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  /* ── initialise from localStorage on mount ─────────────────────────── */
   useEffect(() => {
     const token = localStorage.getItem('token');
     const savedUser = localStorage.getItem('user');
@@ -32,25 +33,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(false);
   }, []);
 
+  /* ── listen for events fired by the axios interceptor ──────────────── */
+  useEffect(() => {
+    // Interceptor silently refreshed the token — keep state in sync
+    const handleRefresh = (e: Event) => {
+      const { user: refreshedUser } = (e as CustomEvent<{ token: string; user: AuthUser }>).detail;
+      setUser(refreshedUser);
+    };
+
+    // Interceptor gave up (refresh failed) — force logout state
+    const handleLogout = () => {
+      setUser(null);
+    };
+
+    window.addEventListener('auth:refresh', handleRefresh);
+    window.addEventListener('auth:logout', handleLogout);
+
+    return () => {
+      window.removeEventListener('auth:refresh', handleRefresh);
+      window.removeEventListener('auth:logout', handleLogout);
+    };
+  }, []);
+
+  /* ── auth actions ───────────────────────────────────────────────────── */
   const login = useCallback(async (credentials: LoginCredentials) => {
-    const { token, user: authUser } = await authService.login(credentials);
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(authUser));
-    setUser(authUser);
+    const result = await authService.login(credentials);
+    localStorage.setItem('token', result!.token);
+    localStorage.setItem('user', JSON.stringify(result!.user));
+    setUser(result!.user);
   }, []);
 
   const register = useCallback(async (credentials: RegisterCredentials) => {
-    const { token, user: authUser } = await authService.register(credentials);
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(authUser));
-    setUser(authUser);
+    const result = await authService.register(credentials);
+    localStorage.setItem('token', result!.token);
+    localStorage.setItem('user', JSON.stringify(result!.user));
+    setUser(result!.user);
   }, []);
 
   const logout = useCallback(async () => {
     try {
       await authService.logout();
     } catch {
-      // ignore server error on logout
+      // ignore server-side errors on logout
     }
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -59,7 +83,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, isAuthenticated: !!user, login, register, logout }}>
+    <AuthContext.Provider
+      value={{ user, isLoading, isAuthenticated: !!user, login, register, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );
