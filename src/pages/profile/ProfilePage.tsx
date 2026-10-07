@@ -12,25 +12,41 @@ import { getAxiosErrorMessage } from '../../lib/utils';
 import { Spinner } from '../../components/shared/Spinner';
 import { PasswordInput } from '../../components/shared/PasswordInput';
 
-const profileSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-  phone: z.string().optional(),
-  department: z.string().optional(),
+const digitCount = (value: string) => value.replace(/\D/g, '').length;
+
+const isPhone = (value: string): boolean =>
+  /^\+?[\d\s()-]{7,20}$/.test(value) && digitCount(value) >= 7 && digitCount(value) <= 15;
+
+export const profileSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, 'Name must be at least 2 characters')
+    .max(100, 'Name must be at most 100 characters'),
+  phone: z
+    .string()
+    .trim()
+    .refine((v) => v === '' || isPhone(v), 'Enter a valid phone number, e.g. +1 555 000 0000'),
+  department: z.string().trim().max(100, 'Department must be at most 100 characters'),
 });
 type ProfileForm = z.infer<typeof profileSchema>;
 
-const passwordSchema = z
+export const passwordSchema = z
   .object({
-    currentPassword: z.string().min(1, 'Required'),
+    currentPassword: z.string().min(1, 'Enter your current password'),
     newPassword: z
       .string()
       .min(8, 'At least 8 characters')
       .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Must contain uppercase, lowercase, and number'),
-    confirmPassword: z.string(),
+    confirmPassword: z.string().min(1, 'Confirm your new password'),
   })
   .refine((d) => d.newPassword === d.confirmPassword, {
     message: 'Passwords do not match',
     path: ['confirmPassword'],
+  })
+  .refine((d) => d.newPassword !== d.currentPassword, {
+    message: 'New password must be different from current password',
+    path: ['newPassword'],
   });
 type PasswordForm = z.infer<typeof passwordSchema>;
 
@@ -77,6 +93,7 @@ export const ProfilePage: React.FC = () => {
     formState: { errors: profileErrors, isDirty: profileDirty },
   } = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
+    mode: 'onTouched',
     defaultValues: { name: '', phone: '', department: '' },
   });
 
@@ -92,7 +109,10 @@ export const ProfilePage: React.FC = () => {
 
   const updateMutation = useMutation({
     mutationFn: (data: ProfileForm) => userService.updateProfile(data),
-    onSuccess: () => toast.success('Profile updated'),
+    onSuccess: (_res, data) => {
+      resetProfile(data);
+      toast.success('Profile updated');
+    },
     onError: (err) => toast.error(getAxiosErrorMessage(err)),
   });
 
@@ -101,7 +121,10 @@ export const ProfilePage: React.FC = () => {
     handleSubmit: submitPass,
     reset: resetPass,
     formState: { errors: passErrors },
-  } = useForm<PasswordForm>({ resolver: zodResolver(passwordSchema) });
+  } = useForm<PasswordForm>({
+    resolver: zodResolver(passwordSchema),
+    mode: 'onTouched',
+  });
 
   const passwordMutation = useMutation({
     mutationFn: (data: PasswordForm) =>
@@ -190,6 +213,7 @@ export const ProfilePage: React.FC = () => {
                   <input
                     type="text"
                     {...regProfile('name')}
+                    maxLength={100}
                     className={profileErrors.name ? 'input-error' : 'input'}
                     placeholder="Your full name"
                   />
@@ -210,6 +234,7 @@ export const ProfilePage: React.FC = () => {
                     <input
                       type="tel"
                       {...regProfile('phone')}
+                      maxLength={20}
                       className={profileErrors.phone ? 'input-error' : 'input'}
                       placeholder="+1 555 000 0000"
                     />
@@ -219,6 +244,7 @@ export const ProfilePage: React.FC = () => {
                     <input
                       type="text"
                       {...regProfile('department')}
+                      maxLength={100}
                       className={profileErrors.department ? 'input-error' : 'input'}
                       placeholder="e.g. Engineering"
                     />
