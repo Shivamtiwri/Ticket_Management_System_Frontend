@@ -1,7 +1,7 @@
 
      cd frontend
      npm install
-     copy .env.example .env
+     .env.example .env
 
    .env:
 
