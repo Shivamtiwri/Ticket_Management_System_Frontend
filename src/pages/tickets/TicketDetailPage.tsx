@@ -5,8 +5,9 @@ import toast from 'react-hot-toast';
 import { format, formatDistanceToNow } from 'date-fns';
 import { ticketService } from '../../services/ticket.service';
 import { userService } from '../../services/user.service';
+import { socketService, CommentDeletedEvent } from '../../services/socket.service';
 import { useAuth } from '../../context/AuthContext';
-import { UserRole, TicketStatus } from '../../types';
+import { UserRole, TicketStatus, Comment } from '../../types';
 import { StatusBadge, PriorityBadge } from '../../components/shared/Badges';
 import { Spinner } from '../../components/shared/Spinner';
 import { ConfirmDialog } from '../../components/shared/ConfirmDialog';
@@ -225,6 +226,32 @@ export const TicketDetailPage: React.FC = () => {
     onSuccess: () => { toast.success('Comment deleted'); setDeleteCommentId(null); invalidate(); },
     onError: (err) => toast.error(getAxiosErrorMessage(err)),
   });
+
+  useEffect(() => {
+    if (!id || !user) return;
+
+    const handleNewComment = (comment: Comment) => {
+      qc.setQueryData<Comment[]>(['comments', id], (old = []) =>
+        old.some((c) => c._id === comment._id) ? old : [...old, comment]
+      );
+    };
+
+    const handleDeletedComment = (payload: CommentDeletedEvent) => {
+      qc.setQueryData<Comment[]>(['comments', id], (old = []) =>
+        old.filter((c) => c._id !== payload.commentId)
+      );
+    };
+
+    socketService.on('comment:new', handleNewComment);
+    socketService.on('comment:deleted', handleDeletedComment);
+    socketService.joinTicket(id);
+
+    return () => {
+      socketService.off('comment:new', handleNewComment);
+      socketService.off('comment:deleted', handleDeletedComment);
+      socketService.leaveTicket(id);
+    };
+  }, [id, user, qc]);
 
   if (isLoading) {
     return (

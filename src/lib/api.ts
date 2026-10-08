@@ -4,7 +4,7 @@ import { authService } from '../services/auth.service';
 
 const BASE_URL = 'https://ticket-management-system-backend-5.onrender.com/api';
 
-const API_ORIGIN = BASE_URL.replace(/\/api\/?$/, '');
+export const API_ORIGIN = BASE_URL.replace(/\/api\/?$/, '');
 
 export const fileUrl = (filePath: string): string => {
   const path = filePath.replace(/^\/+/, '');
