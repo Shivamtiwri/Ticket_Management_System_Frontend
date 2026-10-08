@@ -1,0 +1,6 @@
+services:
+  - type: staticSite
+    name: ticket-management-frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    spa: true
