@@ -11,16 +11,21 @@ import { TicketPriority } from '../../types';
 import { getAxiosErrorMessage } from '../../lib/utils';
 
 const schema = z.object({
-  subject: z.string().min(5, 'Subject must be at least 5 characters').max(200),
-  description: z.string().min(20, 'Description must be at least 20 characters').max(5000),
+  subject: z.string().trim().min(5, 'Subject must be at least 5 characters').max(200, 'Subject cannot exceed 200 characters'),
+  description: z.string().trim().min(20, 'Description must be at least 20 characters').max(5000, 'Description cannot exceed 5000 characters'),
   category: z.string().min(1, 'Category is required'),
-  priority: z.nativeEnum(TicketPriority),
+  priority: z.nativeEnum(TicketPriority, { required_error: 'Priority is required', invalid_type_error: 'Priority is required' }),
 });
 type FormData = z.infer<typeof schema>;
+
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'application/pdf'];
+const MAX_ATTACHMENT_SIZE = 5 * 1024 * 1024;
+const MAX_ATTACHMENT_COUNT = 5;
 
 export const CreateTicketPage: React.FC = () => {
   const navigate = useNavigate();
   const [files, setFiles] = useState<FileList | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
 
   const { data: categories = [] } = useQuery({
     queryKey: ['categories', 'active'],
@@ -30,7 +35,33 @@ export const CreateTicketPage: React.FC = () => {
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: { priority: TicketPriority.MEDIUM },
+    mode: 'onTouched',
   });
+
+  const handleFiles = (selected: FileList | null) => {
+    if (!selected) {
+      setFiles(null);
+      setFileError(null);
+      return;
+    }
+    const list = Array.from(selected);
+    if (list.length > MAX_ATTACHMENT_COUNT) {
+      setFileError(`You can attach at most ${MAX_ATTACHMENT_COUNT} files.`);
+      return;
+    }
+    const tooBig = list.find((f) => f.size > MAX_ATTACHMENT_SIZE);
+    if (tooBig) {
+      setFileError(`"${tooBig.name}" is larger than 5MB.`);
+      return;
+    }
+    const badType = list.find((f) => !ALLOWED_MIME_TYPES.includes(f.type));
+    if (badType) {
+      setFileError(`"${badType.name}" has unsupported type. Only JPG, PNG and PDF are allowed.`);
+      return;
+    }
+    setFileError(null);
+    setFiles(selected);
+  };
 
   const mutation = useMutation({
     mutationFn: (fd: FormData) => {
@@ -53,7 +84,14 @@ export const CreateTicketPage: React.FC = () => {
         <p className="text-gray-500 mt-1">Describe your issue and we'll get back to you.</p>
       </div>
       <div className="card">
-        <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-5" noValidate>
+        <form
+          onSubmit={handleSubmit((d) => {
+            if (fileError) return;
+            mutation.mutate(d);
+          })}
+          className="space-y-5"
+          noValidate
+        >
           <div>
             <label className="label" htmlFor="subject">Subject *</label>
             <input id="subject" type="text" {...register('subject')}
@@ -83,11 +121,12 @@ export const CreateTicketPage: React.FC = () => {
             </div>
             <div>
               <label className="label" htmlFor="priority">Priority *</label>
-              <select id="priority" {...register('priority')} className="input">
+              <select id="priority" {...register('priority')} className={errors.priority ? 'input-error' : 'input'}>
                 {Object.values(TicketPriority).map((p) => (
                   <option key={p} value={p}>{p}</option>
                 ))}
               </select>
+              {errors.priority && <p className="mt-1 text-xs text-red-600">{errors.priority.message}</p>}
             </div>
           </div>
 
@@ -97,16 +136,23 @@ export const CreateTicketPage: React.FC = () => {
               id="attachments"
               type="file"
               multiple
-              accept=".jpg,.jpeg,.png,.gif,.pdf,.txt,.doc,.docx"
-              onChange={(e) => setFiles(e.target.files)}
+              accept=".jpg,.jpeg,.png,.pdf"
+              onChange={(e) => handleFiles(e.target.files)}
               className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
-            <p className="text-xs text-gray-400 mt-1">Max 5 files, 5MB each. JPG, PNG, PDF, TXT, DOC allowed.</p>
+            {fileError ? (
+              <p className="mt-1 text-xs text-red-600">{fileError}</p>
+            ) : (
+              <p className="text-xs text-gray-400 mt-1">Max 5 files, 5MB each. JPG, PNG, PDF allowed.</p>
+            )}
+            {files && !fileError && (
+              <p className="text-xs text-gray-500 mt-1">{files.length} file(s) selected</p>
+            )}
           </div>
 
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" onClick={() => navigate(-1)} className="btn-secondary">Cancel</button>
-            <button type="submit" className="btn-primary" disabled={mutation.isPending}>
+            <button type="submit" className="btn-primary" disabled={mutation.isPending || !!fileError}>
               {mutation.isPending ? 'Creating...' : 'Create Ticket'}
             </button>
           </div>

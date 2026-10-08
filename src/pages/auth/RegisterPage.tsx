@@ -9,13 +9,20 @@ import { getAxiosErrorMessage } from '../../lib/utils';
 import { PasswordInput } from '../../components/shared/PasswordInput';
 
 const schema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.string().email('Valid email required'),
+  name: z.string().trim().min(2, 'Name must be at least 2 characters').max(100, 'Name cannot exceed 100 characters'),
+  email: z.string().trim().min(1, 'Email is required').email('Enter a valid email address'),
   password: z
     .string()
     .min(8, 'Password must be at least 8 characters')
     .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Must contain uppercase, lowercase and number'),
-  phone: z.string().optional(),
+  phone: z
+    .string()
+    .trim()
+    .optional()
+    .refine(
+      (value) => !value || (/^\+?[\d\s()-]{7,20}$/.test(value) && value.replace(/\D/g, '').length >= 7),
+      'Enter a valid phone number, e.g. +1 555 000 0000'
+    ),
 });
 type FormData = z.infer<typeof schema>;
 
@@ -26,6 +33,7 @@ export const RegisterPage: React.FC = () => {
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
+    mode: 'onTouched',
   });
 
   const onSubmit = async (data: FormData) => {
@@ -70,7 +78,8 @@ export const RegisterPage: React.FC = () => {
             <div>
               <label className="label" htmlFor="phone">Phone (optional)</label>
               <input id="phone" type="tel" autoComplete="tel" {...register('phone')}
-                className="input" placeholder="Enter mobile number" />
+                className={errors.phone ? 'input-error' : 'input'} placeholder="Enter mobile number" />
+              {errors.phone && <p className="mt-1 text-xs text-red-600">{errors.phone.message}</p>}
             </div>
             <button type="submit" className="btn-primary w-full mt-2" disabled={isLoading}>
               {isLoading ? 'Creating account...' : 'Register account'}

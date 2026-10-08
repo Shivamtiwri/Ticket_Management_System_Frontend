@@ -5,15 +5,25 @@ import { dashboardService } from '../../services/dashboard.service';
 import { StatCard } from '../../components/shared/StatCard';
 import { StatusBadge, PriorityBadge } from '../../components/shared/Badges';
 import { Spinner } from '../../components/shared/Spinner';
+import { ErrorState } from '../../components/shared/ErrorState';
 import { format } from 'date-fns';
 
 export const AgentDashboard: React.FC = () => {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['dashboard', 'agent'],
     queryFn: dashboardService.getAgentDashboard,
   });
 
   if (isLoading) return <div className="flex justify-center py-20"><Spinner /></div>;
+
+  if (isError && !data) {
+    return (
+      <ErrorState
+        message={error instanceof Error ? error.message : 'Failed to load dashboard.'}
+        onRetry={() => refetch()}
+      />
+    );
+  }
 
   const stats = data?.stats;
 

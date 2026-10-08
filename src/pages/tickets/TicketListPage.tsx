@@ -1,5 +1,5 @@
 ﻿import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { ticketService } from '../../services/ticket.service';
 import { useAuth } from '../../context/AuthContext';
@@ -8,6 +8,7 @@ import { StatusBadge, PriorityBadge } from '../../components/shared/Badges';
 import { Pagination } from '../../components/shared/Pagination';
 import { Spinner } from '../../components/shared/Spinner';
 import { EmptyState } from '../../components/shared/EmptyState';
+import { ErrorState } from '../../components/shared/ErrorState';
 import { TicketFiltersBar } from '../../components/tickets/TicketFiltersBar';
 import { format } from 'date-fns';
 
@@ -15,10 +16,11 @@ export const TicketListPage: React.FC = () => {
   const { user } = useAuth();
   const [filters, setFilters] = useState<TicketFilters>({ page: 1, limit: 10 });
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['tickets', filters],
     queryFn: () => ticketService.getTickets(filters),
     refetchOnMount: 'always',
+    placeholderData: keepPreviousData,
   });
 
   const isCustomer = user?.role === UserRole.CUSTOMER;
@@ -39,6 +41,11 @@ export const TicketListPage: React.FC = () => {
       <div className="card p-0 overflow-hidden">
         {isLoading ? (
           <div className="flex justify-center py-16"><Spinner /></div>
+        ) : isError && !data ? (
+          <ErrorState
+            message={error instanceof Error ? error.message : 'Failed to load tickets.'}
+            onRetry={() => refetch()}
+          />
         ) : !data?.data?.length ? (
           <EmptyState
             title="No tickets found"

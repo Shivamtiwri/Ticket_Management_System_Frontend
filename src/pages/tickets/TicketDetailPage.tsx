@@ -7,17 +7,19 @@ import { ticketService } from '../../services/ticket.service';
 import { userService } from '../../services/user.service';
 import { socketService, CommentDeletedEvent } from '../../services/socket.service';
 import { useAuth } from '../../context/AuthContext';
-import { UserRole, TicketStatus, Comment } from '../../types';
+import { UserRole, TicketStatus, TicketPriority, Comment } from '../../types';
 import { StatusBadge, PriorityBadge } from '../../components/shared/Badges';
 import { Spinner } from '../../components/shared/Spinner';
 import { ConfirmDialog } from '../../components/shared/ConfirmDialog';
 import { formatStatus, getAxiosErrorMessage } from '../../lib/utils';
 import { AttachmentList } from '../../components/shared/AttachmentList';
 
+const COMMENT_MAX_LENGTH = 5000;
 
 function getInitials(name: string) {
   return name
     .split(' ')
+    .filter((n) => n.length > 0)
     .map((n) => n[0])
     .join('')
     .toUpperCase()
@@ -43,81 +45,6 @@ const Avatar: React.FC<{ name: string; size?: 'sm' | 'md' }> = ({ name, size = '
   );
 };
 
-
-interface QuickSelectProps {
-  label: string;
-  currentValue: string;
-  currentLabel: string;
-  options: { value: string; label: string }[];
-  onSelect: (v: string) => void;
-  loading?: boolean;
-  accentClass?: string;
-}
-const QuickSelect: React.FC<QuickSelectProps> = ({
-  label,
-  currentValue,
-  currentLabel,
-  options,
-  onSelect,
-  loading,
-  accentClass = 'bg-slate-700 text-white',
-}) => {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
-
-  return (
-    <div className="relative" ref={ref}>
-      <button
-        onClick={() => setOpen((o) => !o)}
-        disabled={loading}
-        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 shadow-sm hover:opacity-90 active:scale-95 disabled:opacity-50 ${accentClass}`}
-      >
-        {loading
-          ? <span className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-          : null
-        }
-        <span className="opacity-70">{label}:</span>
-        <span>{currentLabel}</span>
-        <svg className={`w-3 h-3 transition-transform ${open ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
-          <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
-        </svg>
-      </button>
-      {open && (
-        <div className="absolute right-0 mt-1 w-52 bg-white rounded-xl shadow-xl border border-gray-100 z-30 overflow-hidden">
-          {options.map((o) => {
-            const isActive = o.value === currentValue;
-            return (
-              <button
-                key={o.value}
-                onClick={() => { if (!isActive) onSelect(o.value); setOpen(false); }}
-                className={`w-full text-left px-4 py-2.5 text-sm flex items-center justify-between gap-2 transition-colors first:pt-3 last:pb-3 ${
-                  isActive
-                    ? 'text-blue-700 bg-blue-50 font-semibold cursor-default'
-                    : 'text-gray-700 hover:bg-blue-50 hover:text-blue-700'
-                }`}
-              >
-                {o.label}
-                {isActive && (
-                  <svg className="w-3.5 h-3.5 text-blue-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                  </svg>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-};
 
 const Section: React.FC<{
   children: React.ReactNode;
@@ -155,10 +82,20 @@ export const TicketDetailPage: React.FC = () => {
   const [selectedAgent, setSelectedAgent] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const { data: ticket, isLoading } = useQuery({
+  const {
+    data: ticket,
+    isLoading,
+    isError: ticketError,
+    error: ticketLoadError,
+    refetch: refetchTicket,
+  } = useQuery({
     queryKey: ['ticket', id],
     queryFn: () => ticketService.getTicketById(id!),
     enabled: !!id,
+    retry: (failureCount, err) => {
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      return status !== 404 && failureCount < 2;
+    },
   });
 
   const { data: comments = [], isLoading: commentsLoading } = useQuery({
@@ -183,6 +120,8 @@ export const TicketDetailPage: React.FC = () => {
     qc.invalidateQueries({ queryKey: ['ticket', id] });
     qc.invalidateQueries({ queryKey: ['comments', id] });
     qc.invalidateQueries({ queryKey: ['activity', id] });
+    qc.invalidateQueries({ queryKey: ['tickets'] });
+    qc.invalidateQueries({ queryKey: ['dashboard'] });
   };
 
   const addCommentMutation = useMutation({
@@ -242,13 +181,19 @@ export const TicketDetailPage: React.FC = () => {
       );
     };
 
+    const handleTicketError = (payload: { message?: string }) => {
+      toast.error(payload?.message || 'Unable to update the ticket room');
+    };
+
     socketService.on('comment:new', handleNewComment);
     socketService.on('comment:deleted', handleDeletedComment);
+    socketService.on('ticket:error', handleTicketError);
     socketService.joinTicket(id);
 
     return () => {
       socketService.off('comment:new', handleNewComment);
       socketService.off('comment:deleted', handleDeletedComment);
+      socketService.off('ticket:error', handleTicketError);
       socketService.leaveTicket(id);
     };
   }, [id, user, qc]);
@@ -258,6 +203,25 @@ export const TicketDetailPage: React.FC = () => {
       <div className="flex flex-col items-center justify-center py-32 gap-3">
         <Spinner />
         <p className="text-sm text-gray-400 animate-pulse">Loading ticket…</p>
+      </div>
+    );
+  }
+  if (ticketError) {
+    const status = (ticketLoadError as { response?: { status?: number } })?.response?.status;
+    return (
+      <div className="text-center py-24">
+        <p className="text-4xl mb-3">🎫</p>
+        <p className="font-medium text-gray-600 mb-1">
+          {status === 404 ? 'Ticket not found' : 'Failed to load ticket'}
+        </p>
+        <p className="text-sm text-gray-400 mb-4">
+          {status === 404
+            ? 'It may have been deleted, or you do not have access to it.'
+            : getAxiosErrorMessage(ticketLoadError, 'Something went wrong while loading this ticket.')}
+        </p>
+        <button type="button" onClick={() => refetchTicket()} className="btn-secondary text-sm px-4 py-2">
+          Try again
+        </button>
       </div>
     );
   }
@@ -303,7 +267,7 @@ export const TicketDetailPage: React.FC = () => {
   );
 
 
-  const priorityOptions = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'].map((p) => ({
+  const priorityOptions = Object.values(TicketPriority).map((p) => ({
     value: p,
     label: p.charAt(0) + p.slice(1).toLowerCase(),
   }));
@@ -501,12 +465,14 @@ export const TicketDetailPage: React.FC = () => {
                   ref={textareaRef}
                   rows={3}
                   value={commentText}
-                  onChange={(e) => setCommentText(e.target.value)}
+                  maxLength={COMMENT_MAX_LENGTH}
+                  onChange={(e) => setCommentText(e.target.value.slice(0, COMMENT_MAX_LENGTH))}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && commentText.trim()) {
                       addCommentMutation.mutate();
                     }
                   }}
+                  aria-label={isInternal ? 'Internal note' : 'Message'}
                   className={`block w-full px-4 py-3 rounded-xl text-sm border placeholder-gray-400 focus:outline-none focus:ring-2 transition-all resize-none ${
                     isInternal
                       ? 'bg-amber-50 border-amber-200 focus:ring-amber-400'
@@ -514,6 +480,11 @@ export const TicketDetailPage: React.FC = () => {
                   }`}
                   placeholder={isInternal ? 'Write an internal note…' : 'Write your message… (Ctrl+Enter to send)'}
                 />
+                <div className="flex items-center justify-between mt-1 text-[11px]">
+                  <span className={commentText.length > COMMENT_MAX_LENGTH ? 'text-red-600' : 'text-gray-400'}>
+                    {commentText.length}/{COMMENT_MAX_LENGTH}
+                  </span>
+                </div>
                 <div className="flex items-center justify-between mt-3 gap-3 flex-wrap">
                   <div className="flex items-center gap-3">
                     <label className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 cursor-pointer font-medium">
@@ -526,9 +497,17 @@ export const TicketDetailPage: React.FC = () => {
                     </label>
                     {!isCustomer && (
                       <label className="flex items-center gap-1.5 text-sm text-gray-600 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          className="sr-only"
+                          checked={isInternal}
+                          onChange={() => setIsInternal((v) => !v)}
+                        />
                         <div
-                          onClick={() => setIsInternal((v) => !v)}
-                          className={`relative w-8 h-4 rounded-full transition-colors cursor-pointer ${isInternal ? 'bg-amber-400' : 'bg-gray-200'}`}
+                          role="switch"
+                          aria-checked={isInternal}
+                          aria-label="Internal note"
+                          className={`relative w-8 h-4 rounded-full transition-colors ${isInternal ? 'bg-amber-400' : 'bg-gray-200'}`}
                         >
                           <div className={`absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform ${isInternal ? 'translate-x-4' : ''}`} />
                         </div>

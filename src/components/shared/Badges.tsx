@@ -30,11 +30,10 @@ const PRIORITY_CONFIG: Record<TicketPriority, { icon: string; classes: string }>
 
 export const PriorityBadge: React.FC<{ priority: TicketPriority }> = ({ priority }) => {
   const cfg = PRIORITY_CONFIG[priority] ?? PRIORITY_CONFIG.LOW;
-  const label = priority.charAt(0) + priority.slice(1).toLowerCase();
   return (
     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${cfg.classes}`}>
       <span className="text-[10px] leading-none">{cfg.icon}</span>
-      {label}
+      {priority}
     </span>
   );
 };

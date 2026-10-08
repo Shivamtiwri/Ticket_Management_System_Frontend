@@ -53,16 +53,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = useCallback(async (credentials: LoginCredentials) => {
     const result = await authService.login(credentials);
-    localStorage.setItem('token', result!.token);
-    localStorage.setItem('user', JSON.stringify(result!.user));
-    setUser(result!.user);
+    if (!result || !result.token || !result.user) {
+      throw new Error('Login failed: no session was returned. Please try again.');
+    }
+    localStorage.setItem('token', result.token);
+    localStorage.setItem('user', JSON.stringify(result.user));
+    setUser(result.user);
   }, []);
 
   const register = useCallback(async (credentials: RegisterCredentials) => {
     const result = await authService.register(credentials);
-    localStorage.setItem('token', result!.token);
-    localStorage.setItem('user', JSON.stringify(result!.user));
-    setUser(result!.user);
+    if (!result || !result.token || !result.user) {
+      throw new Error('Registration failed: no session was returned. Please try again.');
+    }
+    localStorage.setItem('token', result.token);
+    localStorage.setItem('user', JSON.stringify(result.user));
+    setUser(result.user);
   }, []);
 
   const logout = useCallback(async () => {

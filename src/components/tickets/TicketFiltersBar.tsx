@@ -1,4 +1,4 @@
-﻿import React from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { categoryService } from '../../services/category.service';
 import { TicketStatus, TicketPriority, type TicketFilters } from '../../types';
@@ -15,6 +15,17 @@ export const TicketFiltersBar: React.FC<Props> = ({ filters, onChange }) => {
     queryFn: categoryService.getActiveCategories,
   });
 
+  const [searchValue, setSearchValue] = useState(filters.search ?? '');
+
+  useEffect(() => {
+    const current = filters.search ?? '';
+    if (searchValue === current) return;
+    const timer = setTimeout(() => {
+      onChange({ ...filters, search: searchValue, page: 1 });
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchValue, filters, onChange]);
+
   const update = (key: keyof TicketFilters, value: string) =>
     onChange({ ...filters, [key]: value, page: 1 });
 
@@ -23,8 +34,9 @@ export const TicketFiltersBar: React.FC<Props> = ({ filters, onChange }) => {
       <input
         type="search"
         placeholder="Search tickets..."
-        value={filters.search ?? ''}
-        onChange={(e) => update('search', e.target.value)}
+        value={searchValue}
+        onChange={(e) => setSearchValue(e.target.value)}
+        aria-label="Search tickets"
         className="input max-w-xs"
       />
       <select value={filters.status ?? ''} onChange={(e) => update('status', e.target.value)} className="input w-auto">
@@ -51,7 +63,18 @@ export const TicketFiltersBar: React.FC<Props> = ({ filters, onChange }) => {
         <option value="updated">Recently Updated</option>
         <option value="priority">Priority</option>
       </select>
+      {(filters.search || filters.status || filters.priority || filters.category) && (
+        <button
+          type="button"
+          onClick={() => {
+            setSearchValue('');
+            onChange({ page: filters.page ?? 1, limit: filters.limit ?? 10 });
+          }}
+          className="btn-secondary text-sm px-3 py-2"
+        >
+          Clear filters
+        </button>
+      )}
     </div>
   );
 };
-

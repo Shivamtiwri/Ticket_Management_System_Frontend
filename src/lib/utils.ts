@@ -24,12 +24,28 @@ export const getPriorityColor = (priority: TicketPriority): string => {
 };
 
 export const formatStatus = (status: string): string =>
-  status.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  status.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+
+interface ApiErrorPayload {
+  message?: string;
+  errors?: Array<{ field?: string; message?: string }>;
+}
 
 export const getAxiosErrorMessage = (error: unknown, fallback = 'Something went wrong'): string => {
   if (error && typeof error === 'object' && 'response' in error) {
-    const axiosError = error as { response?: { data?: { message?: string } } };
-    return axiosError.response?.data?.message || fallback;
+    const axiosError = error as { response?: { data?: ApiErrorPayload } };
+    const data = axiosError.response?.data;
+    const details = (data?.errors ?? [])
+      .map((e) => e.message)
+      .filter((m): m is string => Boolean(m))
+      .join('. ');
+    if (details) {
+      return data?.message ? `${data.message}: ${details}` : details;
+    }
+    return data?.message || fallback;
+  }
+  if (error instanceof Error && error.message) {
+    return error.message;
   }
   return fallback;
 };

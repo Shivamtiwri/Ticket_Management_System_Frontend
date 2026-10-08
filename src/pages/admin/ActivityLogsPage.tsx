@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { format, formatDistanceToNow } from 'date-fns';
 import { activityService } from '../../services/activity.service';
 import { Pagination } from '../../components/shared/Pagination';
 import { Spinner } from '../../components/shared/Spinner';
+import { ErrorState } from '../../components/shared/ErrorState';
 import type { ActivityLog } from '../../types';
 
 type ActionMeta = { label: string; dot: string; badge: string };
@@ -121,8 +122,8 @@ export const ActivityLogsPage: React.FC = () => {
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['activity', page, action, search],
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ['activity', 'logs', page, action, search],
     queryFn: () =>
       activityService.getActivityLogs({
         page,
@@ -130,6 +131,7 @@ export const ActivityLogsPage: React.FC = () => {
         ...(action && { action }),
         ...(search && { search }),
       }),
+    placeholderData: keepPreviousData,
   });
 
   const handleSearch = (e: React.FormEvent) => {
@@ -222,6 +224,11 @@ export const ActivityLogsPage: React.FC = () => {
             <Spinner />
             <span className="text-sm">Loading activity...</span>
           </div>
+        ) : isError && logs.length === 0 ? (
+          <ErrorState
+            message={error instanceof Error ? error.message : 'Failed to load activity logs.'}
+            onRetry={() => refetch()}
+          />
         ) : logs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3">
             <p className="text-gray-500 font-medium">No activity logs found</p>

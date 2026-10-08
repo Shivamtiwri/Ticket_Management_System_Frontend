@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { format, formatDistanceToNow } from 'date-fns';
 import { userService } from '../../services/user.service';
@@ -7,6 +7,7 @@ import { UserRole } from '../../types';
 import { Pagination } from '../../components/shared/Pagination';
 import { Spinner } from '../../components/shared/Spinner';
 import { ConfirmDialog } from '../../components/shared/ConfirmDialog';
+import { ErrorState } from '../../components/shared/ErrorState';
 import { getAxiosErrorMessage } from '../../lib/utils';
 
 const getInitials = (name: string) =>
@@ -19,7 +20,7 @@ export const AgentsPage: React.FC = () => {
   const [search, setSearch] = useState('');
   const [toggleTarget, setToggleTarget] = useState<{ id: string; name: string; isActive: boolean } | null>(null);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['users', 'agents-list', page, search],
     queryFn: () =>
       userService.getUsers({
@@ -28,6 +29,7 @@ export const AgentsPage: React.FC = () => {
         role: UserRole.AGENT,
         ...(search && { search }),
       }),
+    placeholderData: keepPreviousData,
   });
 
   const toggleMutation = useMutation({
@@ -35,7 +37,8 @@ export const AgentsPage: React.FC = () => {
     onSuccess: () => {
       toast.success('Agent status updated');
       setToggleTarget(null);
-      qc.invalidateQueries({ queryKey: ['users', 'agents-list'] });
+      qc.invalidateQueries({ queryKey: ['users'] });
+      qc.invalidateQueries({ queryKey: ['agents'] });
     },
     onError: (err) => toast.error(getAxiosErrorMessage(err)),
   });
@@ -97,6 +100,11 @@ export const AgentsPage: React.FC = () => {
       <div className="card p-0 overflow-hidden">
         {isLoading ? (
           <div className="flex justify-center py-16"><Spinner /></div>
+        ) : isError && agents.length === 0 ? (
+          <ErrorState
+            message={error instanceof Error ? error.message : 'Failed to load agents.'}
+            onRetry={() => refetch()}
+          />
         ) : agents.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 gap-2">
             <p className="text-gray-500 font-medium">No agents found</p>

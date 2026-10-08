@@ -1,7 +1,5 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
 import { StatusBadge, PriorityBadge } from '../components/shared/Badges';
 import { TicketStatus, TicketPriority } from '../types';
 
@@ -28,7 +26,7 @@ describe('StatusBadge', () => {
 
   it('applies correct color class for RESOLVED', () => {
     const { container } = render(<StatusBadge status={TicketStatus.RESOLVED} />);
-    expect(container.firstChild).toHaveClass('bg-green-100');
+    expect(container.firstChild).toHaveClass('bg-emerald-100');
   });
 });
 

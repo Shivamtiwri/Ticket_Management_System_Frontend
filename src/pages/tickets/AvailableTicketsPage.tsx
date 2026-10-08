@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
@@ -10,6 +10,7 @@ import { PriorityBadge, StatusBadge } from '../../components/shared/Badges';
 import { Pagination } from '../../components/shared/Pagination';
 import { Spinner } from '../../components/shared/Spinner';
 import { EmptyState } from '../../components/shared/EmptyState';
+import { ErrorState } from '../../components/shared/ErrorState';
 import { getAxiosErrorMessage } from '../../lib/utils';
 
 export const AvailableTicketsPage: React.FC = () => {
@@ -17,9 +18,10 @@ export const AvailableTicketsPage: React.FC = () => {
   const qc = useQueryClient();
   const [filters, setFilters] = useState<TicketFilters>({ page: 1, limit: 10 });
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['tickets', 'available', filters],
     queryFn: () => ticketService.getAvailableTickets(filters),
+    placeholderData: keepPreviousData,
   });
 
   const assignMutation = useMutation({
@@ -28,6 +30,8 @@ export const AvailableTicketsPage: React.FC = () => {
     onSuccess: () => {
       toast.success('Ticket accepted!');
       qc.invalidateQueries({ queryKey: ['tickets', 'available'] });
+      qc.invalidateQueries({ queryKey: ['tickets'] });
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
     },
     onError: (err) => toast.error(getAxiosErrorMessage(err)),
   });
@@ -40,6 +44,11 @@ export const AvailableTicketsPage: React.FC = () => {
       <div className="card p-0 overflow-hidden">
         {isLoading ? (
           <div className="flex justify-center py-16"><Spinner /></div>
+        ) : isError && !data ? (
+          <ErrorState
+            message={error instanceof Error ? error.message : 'Failed to load available tickets.'}
+            onRetry={() => refetch()}
+          />
         ) : !data?.data?.length ? (
           <EmptyState title="No available tickets" description="All tickets are currently assigned." />
         ) : (
@@ -75,11 +84,11 @@ export const AvailableTicketsPage: React.FC = () => {
                       </td>
                       <td className="px-4 py-3">
                         <button
-                          onClick={() => assignMutation.mutate({ id: ticket._id, agentId: user!.id })}
-                          disabled={assignMutation.isPending}
-                          className="btn-primary text-xs px-3 py-1"
+                          onClick={() => user && assignMutation.mutate({ id: ticket._id, agentId: user.id })}
+                          disabled={assignMutation.isPending && assignMutation.variables?.id === ticket._id}
+                          className="btn-primary text-xs px-3 py-1 disabled:opacity-50"
                         >
-                          Accept
+                          {assignMutation.isPending && assignMutation.variables?.id === ticket._id ? 'Accepting...' : 'Accept'}
                         </button>
                       </td>
                     </tr>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Navigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -9,18 +9,20 @@ import { getAxiosErrorMessage } from '../../lib/utils';
 import { PasswordInput } from '../../components/shared/PasswordInput';
 
 const schema = z.object({
-  email: z.string().email('Valid email required'),
+  email: z.string().trim().min(1, 'Email is required').email('Enter a valid email address'),
   password: z.string().min(1, 'Password is required'),
 });
 type FormData = z.infer<typeof schema>;
 
 export const LoginPage: React.FC = () => {
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
+    mode: 'onTouched',
   });
 
   const onSubmit = async (data: FormData) => {
@@ -28,13 +30,18 @@ export const LoginPage: React.FC = () => {
     try {
       await login(data);
       toast.success('Welcome back!');
-      navigate('/dashboard');
+      const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname;
+      navigate(from ?? '/dashboard', { replace: true });
     } catch (err) {
-      toast.error(getAxiosErrorMessage(err, 'Invalid credentials'));
+      toast.error(getAxiosErrorMessage(err, 'Unable to sign in'));
     } finally {
       setIsLoading(false);
     }
   };
+
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-300 to-indigo-100 p-4">

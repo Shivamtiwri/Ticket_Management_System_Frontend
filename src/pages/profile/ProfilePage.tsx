@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -79,6 +79,7 @@ const Field: React.FC<{
 
 export const ProfilePage: React.FC = () => {
   const { user: authUser } = useAuth();
+  const qc = useQueryClient();
   const [activeTab, setActiveTab] = useState<'profile' | 'password'>('profile');
 
   const { data: fullUser, isLoading } = useQuery({
@@ -112,6 +113,9 @@ export const ProfilePage: React.FC = () => {
     onSuccess: (_res, data) => {
       resetProfile(data);
       toast.success('Profile updated');
+      qc.invalidateQueries({ queryKey: ['me'] });
+      qc.invalidateQueries({ queryKey: ['users'] });
+      qc.invalidateQueries({ queryKey: ['tickets'] });
     },
     onError: (err) => toast.error(getAxiosErrorMessage(err)),
   });

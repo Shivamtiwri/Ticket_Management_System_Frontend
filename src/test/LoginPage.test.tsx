@@ -39,7 +39,7 @@ describe('LoginPage', () => {
   it('renders email and password fields', () => {
     renderWithProviders(<LoginPage />);
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
+    expect(screen.getByLabelText('Password')).toBeInTheDocument();
   });
 
   it('renders sign in button', () => {
@@ -68,7 +68,7 @@ describe('LoginPage', () => {
     mockLogin.mockResolvedValueOnce(undefined);
     renderWithProviders(<LoginPage />);
     await userEvent.type(screen.getByLabelText(/email/i), 'user@example.com');
-    await userEvent.type(screen.getByLabelText(/password/i), 'Password@123');
+    await userEvent.type(screen.getByLabelText('Password'), 'Password@123');
     await userEvent.click(screen.getByRole('button', { name: /sign in/i }));
     await waitFor(() => {
       expect(mockLogin).toHaveBeenCalledWith({
@@ -82,10 +82,10 @@ describe('LoginPage', () => {
     mockLogin.mockResolvedValueOnce(undefined);
     renderWithProviders(<LoginPage />);
     await userEvent.type(screen.getByLabelText(/email/i), 'user@example.com');
-    await userEvent.type(screen.getByLabelText(/password/i), 'Password@123');
+    await userEvent.type(screen.getByLabelText('Password'), 'Password@123');
     await userEvent.click(screen.getByRole('button', { name: /sign in/i }));
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/dashboard');
+      expect(mockNavigate).toHaveBeenCalledWith('/dashboard', expect.any(Object));
     });
   });
 

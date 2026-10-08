@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import { userService } from '../../services/user.service';
@@ -8,6 +8,7 @@ import { Pagination } from '../../components/shared/Pagination';
 import { Spinner } from '../../components/shared/Spinner';
 import { ConfirmDialog } from '../../components/shared/ConfirmDialog';
 import { Modal } from '../../components/shared/Modal';
+import { ErrorState } from '../../components/shared/ErrorState';
 import { getAxiosErrorMessage } from '../../lib/utils';
 
 const ROLE_STYLE: Record<UserRole, string> = {
@@ -37,7 +38,7 @@ export const UsersPage: React.FC = () => {
   const [roleTarget, setRoleTarget] = useState<{ id: string; name: string } | null>(null);
   const [newRole, setNewRole] = useState('');
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['users', page, search, roleFilter],
     queryFn: () =>
       userService.getUsers({
@@ -46,9 +47,13 @@ export const UsersPage: React.FC = () => {
         ...(search && { search }),
         ...(roleFilter && { role: roleFilter }),
       }),
+    placeholderData: keepPreviousData,
   });
 
-  const invalidate = () => qc.invalidateQueries({ queryKey: ['users'] });
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ['users'] });
+    qc.invalidateQueries({ queryKey: ['agents'] });
+  };
 
   const toggleMutation = useMutation({
     mutationFn: (id: string) => userService.toggleUserStatus(id),
@@ -130,6 +135,11 @@ export const UsersPage: React.FC = () => {
       <div className="card p-0 overflow-hidden">
         {isLoading ? (
           <div className="flex justify-center py-16"><Spinner /></div>
+        ) : isError && users.length === 0 ? (
+          <ErrorState
+            message={error instanceof Error ? error.message : 'Failed to load users.'}
+            onRetry={() => refetch()}
+          />
         ) : users.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 gap-2">
             <p className="text-gray-500 font-medium">No users found</p>

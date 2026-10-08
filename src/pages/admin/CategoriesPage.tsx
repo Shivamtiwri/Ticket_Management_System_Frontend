@@ -1,5 +1,4 @@
-﻿
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,12 +9,13 @@ import { type Category } from '../../types';
 import { Spinner } from '../../components/shared/Spinner';
 import { Modal } from '../../components/shared/Modal';
 import { ConfirmDialog } from '../../components/shared/ConfirmDialog';
+import { ErrorState } from '../../components/shared/ErrorState';
 import { getAxiosErrorMessage } from '../../lib/utils';
-import { Pencil, Power, Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 
 const schema = z.object({
-    name: z.string().min(2, 'Name must be at least 2 characters').max(100),
-    description: z.string().max(500).optional(),
+    name: z.string().trim().min(2, 'Name must be at least 2 characters').max(100, 'Name cannot exceed 100 characters'),
+    description: z.string().trim().max(500, 'Description cannot exceed 500 characters').optional(),
 });
 type FormData = z.infer<typeof schema>;
 
@@ -25,13 +25,14 @@ export const CategoriesPage: React.FC = () => {
     const [editing, setEditing] = useState<Category | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<Category | null>(null);
 
-    const { data: categories = [], isLoading } = useQuery({
+    const { data: categories = [], isLoading, isError, error, refetch } = useQuery({
         queryKey: ['categories'],
         queryFn: categoryService.getCategories,
     });
 
     const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
         resolver: zodResolver(schema),
+        mode: 'onTouched',
     });
 
     const invalidate = () => qc.invalidateQueries({ queryKey: ['categories'] });
@@ -90,6 +91,11 @@ export const CategoriesPage: React.FC = () => {
             <div className="card p-0 overflow-hidden">
                 {isLoading ? (
                     <div className="flex justify-center py-16"><Spinner /></div>
+                ) : isError && !categories.length ? (
+                    <ErrorState
+                        message={error instanceof Error ? error.message : 'Failed to load categories.'}
+                        onRetry={() => refetch()}
+                    />
                 ) : !categories.length ? (
                     <div className="text-center py-12 text-gray-500">No categories yet.</div>
                 ) : (
@@ -128,9 +134,10 @@ export const CategoriesPage: React.FC = () => {
                                                 <button
                                                     type="button"
                                                     onClick={() => toggleMutation.mutate(cat._id)}
+                                                    disabled={toggleMutation.isPending && toggleMutation.variables === cat._id}
                                                     aria-label={cat.isActive ? "Deactivate" : "Activate"}
                                                     title={cat.isActive ? "Deactivate" : "Activate"}
-                                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ${cat.isActive ? "bg-green-600" : "bg-gray-400"
+                                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 disabled:opacity-60 ${cat.isActive ? "bg-green-600" : "bg-gray-400"
                                                         }`}
                                                 >
                                                     <span
@@ -166,13 +173,14 @@ export const CategoriesPage: React.FC = () => {
             >
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
                     <div>
-                        <label className="label">Name *</label>
-                        <input type="text" {...register('name')} className={errors.name ? 'input-error' : 'input'} />
+                        <label className="label" htmlFor="category-name">Name *</label>
+                        <input id="category-name" type="text" {...register('name')} className={errors.name ? 'input-error' : 'input'} />
                         {errors.name && <p className="mt-1 text-xs text-red-600">{errors.name.message}</p>}
                     </div>
                     <div>
-                        <label className="label">Description</label>
-                        <textarea rows={3} {...register('description')} className="input" />
+                        <label className="label" htmlFor="category-description">Description</label>
+                        <textarea id="category-description" rows={3} {...register('description')} className={errors.description ? 'input-error' : 'input'} />
+                        {errors.description && <p className="mt-1 text-xs text-red-600">{errors.description.message}</p>}
                     </div>
                     <div className="flex justify-end gap-3">
                         <button type="button" onClick={() => { setShowModal(false); setEditing(null); }} className="btn-secondary">Cancel</button>

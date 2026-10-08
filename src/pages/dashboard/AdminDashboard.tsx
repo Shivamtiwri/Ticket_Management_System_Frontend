@@ -4,9 +4,10 @@ import { useQuery } from '@tanstack/react-query';
 import { dashboardService } from '../../services/dashboard.service';
 import { StatCard } from '../../components/shared/StatCard';
 import { Spinner } from '../../components/shared/Spinner';
+import { ErrorState } from '../../components/shared/ErrorState';
 
 export const AdminDashboard: React.FC = () => {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['dashboard', 'admin'],
     queryFn: dashboardService.getAdminDashboard,
   });
@@ -16,6 +17,15 @@ export const AdminDashboard: React.FC = () => {
       <div className="flex justify-center py-20">
         <Spinner />
       </div>
+    );
+  }
+
+  if (isError && !data) {
+    return (
+      <ErrorState
+        message={error instanceof Error ? error.message : 'Failed to load dashboard.'}
+        onRetry={() => refetch()}
+      />
     );
   }
 
