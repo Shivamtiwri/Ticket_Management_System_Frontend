@@ -19,7 +19,7 @@ export const AppLayout: React.FC = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
-          <span className="font-semibold text-gray-900">TicketPro</span>
+          <span className="font-semibold text-gray-900">T.M.S</span>
         </header>
         <main className="flex-1 overflow-y-auto p-6">
           <Outlet />

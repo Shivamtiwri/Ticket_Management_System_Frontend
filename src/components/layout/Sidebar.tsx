@@ -112,14 +112,25 @@ export const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ is
     navigate('/login');
   };
 
+
+  const roleChipStyles = {
+    [UserRole.CUSTOMER]: 'border-blue-500 text-blue-500',
+    [UserRole.AGENT]: 'border-yellow-500 text-yellow-500',
+    [UserRole.ADMIN]: 'border-red-500 text-red-500',
+  };
   return (
     <>
       {isOpen && <div className="fixed inset-0 z-20 bg-black/40 lg:hidden" onClick={onClose} />}
       <aside className={`fixed top-0 left-0 z-30 h-full w-64 shrink-0 bg-gray-900 text-white flex flex-col transition-transform duration-200 lg:translate-x-0 lg:static lg:z-auto ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="p-6 border-b border-gray-700 flex items-start justify-between gap-2">
           <div>
-            <h1 className="text-xl font-bold text-white">TicketPro</h1>
-            <p className="text-xs text-gray-400 mt-1 capitalize">{roleLabels[user?.role ?? UserRole.CUSTOMER]}</p>
+            <h1 className="text-xl font-bold text-white">T.M.S</h1>
+            <span
+              className={`inline-flex items-center rounded-full border bg-transparent px-2 text-xs font-medium capitalize ${roleChipStyles[user?.role ?? UserRole.CUSTOMER]
+                }`}
+            >
+              {roleLabels[user?.role ?? UserRole.CUSTOMER]}
+            </span>
           </div>
           <button
             onClick={onClose}
@@ -137,8 +148,7 @@ export const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ is
               end
               onClick={onClose}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  isActive ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white'
                 }`
               }
             >
@@ -147,20 +157,66 @@ export const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ is
             </NavLink>
           ))}
         </nav>
-        <div className="p-4 border-t border-gray-700">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-sm font-bold">
-              {user?.name?.[0]?.toUpperCase()}
+
+        <div className=" border-gray-800 bg-gray-900/50 p-4">
+          <div className="rounded-xl border border-gray-800 bg-gray-800/60 p-3 shadow-sm">
+            <div className="flex items-center gap-3">
+              
+              <div className="relative shrink-0">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-sm font-semibold text-white shadow-lg shadow-blue-500/20 ring-2 ring-gray-700">
+                  {user?.name?.[0]?.toUpperCase() || "U"}
+                </div>
+
+                <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-gray-800 bg-emerald-500" />
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-white">
+                  {user?.name || "User"}
+                </p>
+                <p className="mt-0.5 truncate text-xs text-gray-400">
+                  {user?.email || "No email available"}
+                </p>
+              </div>
+
+             
             </div>
-            <div className="overflow-hidden">
-              <p className="text-sm font-medium truncate">{user?.name}</p>
-              <p className="text-xs text-gray-400 truncate">{user?.email}</p>
-            </div>
+
+        
+            <div className="my-3 h-px bg-gray-700/70" />
+
+            
+            <button
+              onClick={handleLogout}
+              className="group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-400 transition-all duration-200 hover:bg-red-500/10 hover:text-red-400"
+            >
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-700/70 transition-colors group-hover:bg-red-500/10">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className="h-4 w-4"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6A2.25 2.25 0 005.25 5.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M18 12H9m9 0l-3-3m3 3l-3 3"
+                  />
+                </svg>
+              </div>
+
+              <span>Sign out</span>
+            </button>
           </div>
-          <button onClick={handleLogout} className="w-full text-left text-sm text-gray-400 hover:text-white transition-colors px-3 py-2 rounded-lg hover:bg-gray-700">
-            Sign out
-          </button>
         </div>
+
       </aside>
     </>
   );
