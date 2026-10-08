@@ -18,6 +18,7 @@ export const TicketListPage: React.FC = () => {
   const { data, isLoading } = useQuery({
     queryKey: ['tickets', filters],
     queryFn: () => ticketService.getTickets(filters),
+    refetchOnMount: 'always',
   });
 
   const isCustomer = user?.role === UserRole.CUSTOMER;

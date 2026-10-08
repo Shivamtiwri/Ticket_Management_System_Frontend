@@ -1,8 +1,8 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { authService } from '../services/auth.service';
-// const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-const BASE_URL = 'https://ticket-management-system-backend-5.onrender.com/api';
+// const BASE_URL = 'https://ticket-management-system-backend-5.onrender.com/api';
 
 export const API_ORIGIN = BASE_URL.replace(/\/api\/?$/, '');
 
