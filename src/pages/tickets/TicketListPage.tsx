@@ -69,7 +69,7 @@ export const TicketListPage: React.FC = () => {
                         </Link>
                       </td>
                       <td className="px-4 py-3 text-gray-600">
-                        {typeof ticket.category === 'object' ? ticket.category.name : ticket.category}
+                        {typeof ticket?.category === 'object' ? ticket?.category?.name : ticket?.category}
                       </td>
                       <td className="px-4 py-3"><PriorityBadge priority={ticket.priority} /></td>
                       <td className="px-4 py-3"><StatusBadge status={ticket.status} /></td>
