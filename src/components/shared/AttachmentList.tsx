@@ -49,13 +49,25 @@ export const AttachmentList: React.FC<AttachmentListProps> = ({ attachments, com
     setLightboxSrc(src);
     setLightboxAlt(alt);
   };
+  const attachmentUrl = (attachment: Attachment) => (
+    /^https?:\/\//i.test(attachment.path)
+      ? attachment.path
+      : fileUrl(`uploads/${attachment.filename}`)
+  );
+  const downloadUrl = (attachment: Attachment) => {
+    if (!/^https?:\/\//i.test(attachment.path) || !attachment.path.includes('res.cloudinary.com/')) {
+      return attachmentUrl(attachment);
+    }
+    const safeName = attachment.originalName.replace(/[^a-zA-Z0-9._-]/g, '_');
+    return attachment.path.replace('/upload/', `/upload/fl_attachment:${safeName}/`);
+  };
 
   return (
     <>
       {images.length > 0 && (
         <div className={`flex flex-wrap gap-2 ${compact ? 'mt-2' : 'mt-3'}`}>
           {images.map((a, i) => {
-            const src = fileUrl(`uploads/${a.filename}`);
+            const src = attachmentUrl(a);
             const imgSize = compact ? 'h-20 w-20' : 'h-32 w-32';
             return (
               <button
@@ -83,8 +95,8 @@ export const AttachmentList: React.FC<AttachmentListProps> = ({ attachments, com
           {files.map((a, i) => (
             <a
               key={i}
-              href={fileUrl(`uploads/${a.filename}`)}
-              download={a.originalName}
+              href={downloadUrl(a)}
+              download={/^https?:\/\//i.test(a.path) ? undefined : a.originalName}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline bg-blue-50 px-2 py-1 rounded border border-blue-100"
