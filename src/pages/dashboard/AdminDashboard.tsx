@@ -39,35 +39,45 @@ export const AdminDashboard: React.FC = () => {
 
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard
+          link="/tickets"
           label="Total"
           value={stats?.total ?? 0}
           color="text-gray-700"
         />
 
         <StatCard
+          link="/tickets"
           label="Open"
           value={stats?.open ?? 0}
           color="text-blue-600"
+          state={{ filters: { status: 'OPEN' } }}
         />
 
         <StatCard
+          link="/tickets"
           label="In Progress"
           value={stats?.inProgress ?? 0}
           color="text-yellow-600"
+          state={{ filters: { status: 'IN_PROGRESS' } }}
         />
 
         <StatCard
+          link="/tickets"
           label="Resolved"
           value={stats?.resolved ?? 0}
           color="text-green-600"
+          state={{ filters: { status: 'RESOLVED' } }}
         />
 
         <StatCard
+          link="/tickets"
           label="Closed"
           value={stats?.closed ?? 0}
           color="text-gray-500"
+          state={{ filters: { status: 'CLOSED' } }}
         />
         <StatCard
+          link="/categories"
           label="Total Category"
           value={stats?.total_category ?? 0}
           color="text-green-500"

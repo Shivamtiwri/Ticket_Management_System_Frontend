@@ -31,11 +31,11 @@ export const AgentDashboard: React.FC = () => {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-gray-900">Agent Dashboard</h1>
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <StatCard label="Assigned" value={stats?.assigned ?? 0} color="text-purple-600" />
-        <StatCard label="Open" value={stats?.open ?? 0} color="text-blue-600" />
-        <StatCard label="In Progress" value={stats?.inProgress ?? 0} color="text-yellow-600" />
-        <StatCard label="Waiting" value={stats?.waitingForUser ?? 0} color="text-orange-600" />
-        <StatCard label="Resolved" value={stats?.resolved ?? 0} color="text-green-600" />
+        <StatCard link="/tickets" label="Assigned" value={stats?.assigned ?? 0} color="text-purple-600" state={{ filters: { status: 'ASSIGNED' } }} />
+        <StatCard link="/tickets" label="Open" value={stats?.open ?? 0} color="text-blue-600" state={{ filters: { status: 'OPEN' } }} />
+        <StatCard link="/tickets" label="In Progress" value={stats?.inProgress ?? 0} color="text-yellow-600" state={{ filters: { status: 'IN_PROGRESS' } }} />
+        <StatCard link="/tickets" label="Waiting" value={stats?.waitingForUser ?? 0} color="text-orange-600" state={{ filters: { status: 'WAITING_FOR_USER' } }} />
+        <StatCard link="/tickets" label="Resolved" value={stats?.resolved ?? 0} color="text-green-600" state={{ filters: { status: 'RESOLVED' } }} />
       </div>
 
       <div className="card">

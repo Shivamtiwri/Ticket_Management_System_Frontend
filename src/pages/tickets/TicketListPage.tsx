@@ -1,9 +1,9 @@
-﻿import React, { useState } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams, useLocation } from 'react-router-dom';
 import { ticketService } from '../../services/ticket.service';
 import { useAuth } from '../../context/AuthContext';
-import { UserRole, type TicketFilters } from '../../types';
+import { UserRole, TicketStatus, type TicketFilters } from '../../types';
 import { StatusBadge, PriorityBadge } from '../../components/shared/Badges';
 import { Pagination } from '../../components/shared/Pagination';
 import { Spinner } from '../../components/shared/Spinner';
@@ -14,12 +14,57 @@ import { format } from 'date-fns';
 
 export const TicketListPage: React.FC = () => {
   const { user } = useAuth();
-  const [filters, setFilters] = useState<TicketFilters>({ page: 1, limit: 10 });
+  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const [filters, setFilters] = useState<TicketFilters>(() => {
+    const status = searchParams.get('status') as TicketStatus | null;
+    const priority = searchParams.get('priority') as any;
+    const category = searchParams.get('category');
+    const search = searchParams.get('search');
+    const sortBy = searchParams.get('sortBy') as any;
+    const page = searchParams.get('page');
+    const limit = searchParams.get('limit');
+
+    const initialFilters: TicketFilters = { page: 1, limit: 10 };
+
+    // Check location state first (for navigation from dashboard)
+    const stateFilters = (location.state as any)?.filters;
+    if (stateFilters?.status) {
+      if (Object.values(TicketStatus).includes(stateFilters.status)) {
+        initialFilters.status = stateFilters.status;
+      }
+    } else if (status && Object.values(TicketStatus).includes(status)) {
+      initialFilters.status = status;
+    }
+
+    if (priority && ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'].includes(priority)) {
+      initialFilters.priority = priority;
+    }
+    if (category) initialFilters.category = category;
+    if (search) initialFilters.search = search;
+    if (sortBy) initialFilters.sortBy = sortBy;
+    if (page) initialFilters.page = parseInt(page);
+    if (limit) initialFilters.limit = parseInt(limit);
+
+    return initialFilters;
+  });
+
+  // Update URL when filters change
+  useEffect(() => {
+    const params: any = {};
+    if (filters.status) params.status = filters.status;
+    if (filters.priority) params.priority = filters.priority;
+    if (filters.category) params.category = filters.category;
+    if (filters.search) params.search = filters.search;
+    if (filters.sortBy) params.sortBy = filters.sortBy;
+    if (filters.page && filters.page !== 1) params.page = filters.page.toString();
+    if (filters.limit && filters.limit !== 10) params.limit = filters.limit.toString();
+    setSearchParams(params, { replace: true });
+  }, [filters, setSearchParams]);
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['tickets', filters],
     queryFn: () => ticketService.getTickets(filters),
-    refetchOnMount: 'always',
     placeholderData: keepPreviousData,
   });
 
