@@ -1,7 +1,7 @@
 import { io, Socket } from 'socket.io-client';
 import { API_ORIGIN } from '../lib/api';
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || API_ORIGIN;
+const SOCKET_URL = API_ORIGIN;
 
 export interface CommentDeletedEvent {
   ticketId?: string;
