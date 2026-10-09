@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { format, formatDistanceToNow } from 'date-fns';
@@ -85,7 +85,7 @@ export const AgentsPage: React.FC = () => {
               placeholder="Search agents by name or email..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              className="input w-72"
+              className="input w-64"
             />
             <button type="submit" className="btn-primary text-sm px-4 py-2">Search</button>
           </form>
