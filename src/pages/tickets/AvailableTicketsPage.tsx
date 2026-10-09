@@ -69,13 +69,13 @@ export const AvailableTicketsPage: React.FC = () => {
                   {data.data.map((ticket) => (
                     <tr key={ticket._id} className="hover:bg-gray-50">
                       <td className="px-4 py-3">
-                        <div
-                          // to={`/tickets/${ticket._id}`}
+                        <Link
+                          to={`/tickets/${ticket._id}`}
                           className="block rounded focus:outline-none focus:ring-2 focus:ring-blue-500 hover:text-blue-600"
                         >
                           <p className="font-medium text-gray-900 line-clamp-1">{ticket.subject}</p>
                           <p className="text-xs text-gray-400">{ticket.ticketId}</p>
-                        </div>
+                        </Link>
                       </td>
                       <td className="px-4 py-3 text-gray-600">
                         {typeof ticket.category === 'object' ? ticket.category.name : '—'}
