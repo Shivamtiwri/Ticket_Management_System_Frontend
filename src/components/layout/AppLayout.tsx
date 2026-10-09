@@ -6,10 +6,10 @@ export const AppLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50">
+    <div className="flex min-h-screen bg-gray-50">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3 lg:hidden">
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="flex shrink-0 items-center gap-3 border-b border-gray-200 bg-white px-4 py-3 lg:hidden">
           <button
             onClick={() => setSidebarOpen(true)}
             className="p-2 rounded-lg text-gray-500 hover:bg-gray-100"
@@ -21,7 +21,7 @@ export const AppLayout: React.FC = () => {
           </button>
           <span className="font-semibold text-gray-900">T.M.S</span>
         </header>
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="min-w-0 flex-1 p-4 sm:p-6">
           <Outlet />
         </main>
       </div>

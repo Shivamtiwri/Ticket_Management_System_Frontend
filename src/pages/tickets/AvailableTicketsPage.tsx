@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -69,10 +69,11 @@ export const AvailableTicketsPage: React.FC = () => {
                   {data.data.map((ticket) => (
                     <tr key={ticket._id} className="hover:bg-gray-50">
                       <td className="px-4 py-3">
-                        <Link to={`/tickets/${ticket._id}`} className="hover:text-blue-600">
-                          <p className="font-medium text-gray-900 line-clamp-1">{ticket.subject}</p>
-                          <p className="text-xs text-gray-400">{ticket.ticketId}</p>
-                        </Link>
+                        {/* <Link to={`/tickets/${ticket._id}`} className="hover:text-blue-600"> */}
+                        <div className="hover:text-blue-600"> <p className="font-medium text-gray-900 line-clamp-1">{ticket.subject}</p>
+                          <p className="text-xs text-gray-400">{ticket.ticketId}</p></div>
+
+                        {/* </Link> */}
                       </td>
                       <td className="px-4 py-3 text-gray-600">
                         {typeof ticket.category === 'object' ? ticket.category.name : '—'}

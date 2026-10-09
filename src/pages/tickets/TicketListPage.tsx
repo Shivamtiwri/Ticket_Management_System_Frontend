@@ -65,6 +65,7 @@ export const TicketListPage: React.FC = () => {
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['tickets', filters],
     queryFn: () => ticketService.getTickets(filters),
+    refetchOnMount: 'always',
     placeholderData: keepPreviousData,
   });
 

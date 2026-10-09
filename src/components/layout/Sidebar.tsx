@@ -121,7 +121,7 @@ export const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ is
   return (
     <>
       {isOpen && <div className="fixed inset-0 z-20 bg-black/40 lg:hidden" onClick={onClose} />}
-      <aside className={`fixed top-0 left-0 z-30 h-full w-64 shrink-0 bg-gray-900 text-white flex flex-col transition-transform duration-200 lg:translate-x-0 lg:static lg:z-auto ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`fixed top-0 left-0 z-30 h-full w-64 shrink-0 bg-gray-900 text-white flex flex-col transition-transform duration-200 lg:sticky lg:top-0 lg:h-screen lg:self-start lg:translate-x-0 lg:z-auto ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="p-6 border-b border-gray-700 flex items-start justify-between gap-2">
           <div>
             <h1 className="text-xl font-bold text-white">T.M.S</h1>

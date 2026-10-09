@@ -50,7 +50,7 @@ const Section: React.FC<{
   children: React.ReactNode;
   className?: string;
 }> = ({ children, className = '' }) => (
-  <div className={`rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden ${className}`}>
+  <div className={`overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm ${className}`}>
     {children}
   </div>
 );
@@ -58,12 +58,11 @@ const Section: React.FC<{
 const SectionHeader: React.FC<{
   title: string;
   subtitle?: string;
-  accentClass?: string;
-}> = ({ title, subtitle, accentClass = 'from-slate-50 to-gray-50' }) => (
-  <div className={`px-5 py-4 bg-gradient-to-r ${accentClass} border-b border-gray-100 flex items-center gap-3`}>
+}> = ({ title, subtitle }) => (
+  <div className="flex items-center justify-between gap-3 border-b border-gray-200 bg-gray-50 px-5 py-4">
     <div>
-      <h2 className="font-semibold text-gray-900 text-sm leading-tight">{title}</h2>
-      {subtitle && <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>}
+      <h2 className="text-sm font-semibold leading-tight text-gray-900">{title}</h2>
+      {subtitle && <p className="mt-1 text-xs text-gray-500">{subtitle}</p>}
     </div>
   </div>
 );
@@ -81,6 +80,8 @@ export const TicketDetailPage: React.FC = () => {
   const [showAssignPanel, setShowAssignPanel] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const conversationRef = useRef<HTMLDivElement>(null);
+  const shouldStickToLatest = useRef(true);
 
   const {
     data: ticket,
@@ -115,6 +116,13 @@ export const TicketDetailPage: React.FC = () => {
     queryFn: userService.getAgents,
     enabled: user?.role === UserRole.ADMIN,
   });
+
+  useEffect(() => {
+    const conversation = conversationRef.current;
+    if (!commentsLoading && shouldStickToLatest.current && conversation) {
+      conversation.scrollTop = conversation.scrollHeight;
+    }
+  }, [comments, commentsLoading]);
 
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ['ticket', id] });
@@ -277,71 +285,59 @@ export const TicketDetailPage: React.FC = () => {
     ? (typeof ticket.assignedAgent === 'object' ? ticket.assignedAgent.name : String(ticket.assignedAgent))
     : null;
   const categoryName = typeof ticket.category === 'object' ? ticket.category.name : String(ticket.category);
+  const orderedComments = [...comments].sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+  );
 
-
-  const heroGradient: Record<TicketStatus, string> = {
-    OPEN: 'from-blue-600 via-blue-500 to-indigo-500',
-    ASSIGNED: 'from-violet-600 via-purple-500 to-indigo-500',
-    IN_PROGRESS: 'from-amber-500 via-orange-400 to-yellow-400',
-    WAITING_FOR_USER: 'from-orange-500 via-amber-400 to-yellow-400',
-    RESOLVED: 'from-emerald-500 via-green-400 to-teal-400',
-    CLOSED: 'from-gray-500 via-slate-400 to-gray-400',
-  };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-5">
-
-      <div className={`relative rounded-2xl bg-gradient-to-br ${heroGradient[ticket.status]} p-6 text-white shadow-lg overflow-hidden`}>
-   
-        <div className="absolute inset-0 opacity-10 pointer-events-none"
-          style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '24px 24px' }} />
-
-        <div className="relative flex items-start justify-between gap-4 flex-wrap">
+    <div className="mx-auto max-w-6xl space-y-5">
+      <header className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
             <button
               onClick={() => navigate(-1)}
-              className="inline-flex items-center gap-1.5 text-white/70 hover:text-white text-xs font-medium mb-3 transition-colors"
+              className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-900"
             >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
               </svg>
               Back
             </button>
-            <h1 className="text-xl font-bold leading-snug text-white drop-shadow">{ticket.subject}</h1>
-            <div className="flex items-center gap-3 mt-2 flex-wrap">
-              <code className="text-xs bg-white/20 backdrop-blur px-2 py-0.5 rounded font-mono">{ticket.ticketId}</code>
-              <span className="text-white/60 text-xs">·</span>
-              <span className="text-xs text-white/70">opened {formatDistanceToNow(new Date(ticket.createdAt), { addSuffix: true })}</span>
-              {categoryName && (
-                <>
-                  <span className="text-white/60 text-xs">·</span>
-                  <span className="text-xs bg-white/20 backdrop-blur px-2 py-0.5 rounded-full">{categoryName}</span>
-                </>
-              )}
+            <h1 className="break-words text-xl font-bold leading-snug text-gray-900 sm:text-2xl">{ticket.subject}</h1>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <code className="rounded-md border border-gray-200 bg-gray-50 px-2 py-1 font-mono text-xs text-gray-600">{ticket.ticketId}</code>
+              <StatusBadge status={ticket.status} />
+              <PriorityBadge priority={ticket.priority} />
             </div>
+            <p className="mt-3 text-sm text-gray-500">
+              Opened {format(new Date(ticket.createdAt), 'MMM d, yyyy')} <span className="mx-1 text-gray-300">·</span>
+              {formatDistanceToNow(new Date(ticket.createdAt), { addSuffix: true })}
+              {categoryName && <><span className="mx-1 text-gray-300">·</span>{categoryName}</>}
+            </p>
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap flex-shrink-0">
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
             {isAdmin && (
               <button
                 onClick={() => setShowAssignPanel((v) => !v)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-blue-700 hover:bg-blue-50 transition-all shadow-sm active:scale-95"
+                className="btn-secondary text-sm"
               >
-                {ticket.assignedAgent ? '↺ Reassign' : '+ Assign Agent'}
+                {ticket.assignedAgent ? 'Reassign agent' : 'Assign agent'}
               </button>
             )}
           </div>
         </div>
 
-       
         {showAssignPanel && isAdmin && (
-          <div className="relative mt-4 bg-white/10 backdrop-blur border border-white/20 rounded-xl p-4 flex items-end gap-3 flex-wrap">
-            <div className="flex-1 min-w-48">
-              <label className="text-xs text-white/70 font-medium mb-1 block">Select Agent</label>
+          <div className="mt-5 flex flex-col gap-3 rounded-lg border border-gray-200 bg-gray-50 p-4 sm:flex-row sm:items-end">
+            <div className="min-w-48 flex-1">
+              <label className="label" htmlFor="assign-agent">Select agent</label>
               <select
+                id="assign-agent"
                 value={selectedAgent}
                 onChange={(e) => setSelectedAgent(e.target.value)}
-                className="w-full text-sm bg-white/90 text-gray-800 border border-white/30 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-white/50"
+                className="input"
               >
                 <option value="">Choose an agent…</option>
                 {agents.map((a) => (
@@ -352,24 +348,23 @@ export const TicketDetailPage: React.FC = () => {
             <button
               onClick={() => selectedAgent && assignMutation.mutate(selectedAgent)}
               disabled={!selectedAgent || assignMutation.isPending}
-              className="px-4 py-2 bg-white text-blue-700 rounded-lg text-sm font-semibold hover:bg-blue-50 disabled:opacity-50 transition-all shadow"
+              className="btn-primary"
             >
-              {assignMutation.isPending ? 'Assigning…' : 'Confirm'}
+              {assignMutation.isPending ? 'Assigning…' : 'Confirm assignment'}
             </button>
-            <button onClick={() => setShowAssignPanel(false)} className="text-white/60 hover:text-white text-sm">✕</button>
+            <button onClick={() => setShowAssignPanel(false)} className="btn-secondary">Cancel</button>
           </div>
         )}
-      </div>
+      </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <div className="grid min-w-0 grid-cols-1 gap-5">
         
-        <div className="lg:col-span-2 space-y-5">
+        <div className="grid min-w-0 grid-cols-1 content-start gap-5 lg:grid-cols-2">
 
          
-          <Section>
+          <Section className="lg:col-span-2">
             <SectionHeader
               title="Description"
-              accentClass="from-slate-50 to-gray-50"
             />
             <div className="px-5 py-4">
               <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{ticket.description}</p>
@@ -383,13 +378,191 @@ export const TicketDetailPage: React.FC = () => {
           </Section>
 
        
+          
+        </div>
+
+       
+        <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <Section>
+            <SectionHeader
+              title="Ticket Details"
+            />
+            <div className="px-5 py-4 space-y-4">
+
+              <div>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Status</p>
+                {transitionStatuses.length > 0 ? (
+                  <div className="relative">
+                    <select
+                      value={ticket.status}
+                      onChange={(e) => updateStatusMutation.mutate(e.target.value)}
+                      disabled={updateStatusMutation.isPending}
+                      className="w-full appearance-none text-sm font-semibold border border-gray-200 rounded-xl px-3 py-2 pr-8 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 cursor-pointer"
+                    >
+                      {statusOptions.map((o) => (
+                        <option key={o.value} value={o.value}>{o.label}</option>
+                      ))}
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center">
+                      {updateStatusMutation.isPending
+                        ? <span className="w-3.5 h-3.5 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin" />
+                        : <svg className="w-3.5 h-3.5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+                          </svg>
+                      }
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <StatusBadge status={ticket.status} />
+                    <span className="text-[10px] text-gray-400 italic">no transitions available</span>
+                  </div>
+                )}
+              </div>
+
+             
+              <div>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Priority</p>
+                {(isAdmin || isAgent) && ticket.status !== TicketStatus.CLOSED ? (
+                  <div className="relative">
+                    <select
+                      value={ticket.priority}
+                      onChange={(e) => updatePriorityMutation.mutate(e.target.value)}
+                      disabled={updatePriorityMutation.isPending}
+                      className="w-full appearance-none text-sm font-semibold border border-gray-200 rounded-xl px-3 py-2 pr-8 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 cursor-pointer"
+                    >
+                      {priorityOptions.map((o) => (
+                        <option key={o.value} value={o.value}>{o.label}</option>
+                      ))}
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center">
+                      {updatePriorityMutation.isPending
+                        ? <span className="w-3.5 h-3.5 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin" />
+                        : <svg className="w-3.5 h-3.5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+                          </svg>
+                      }
+                    </div>
+                  </div>
+                ) : (
+                  <PriorityBadge priority={ticket.priority} />
+                )}
+              </div>
+
+            </div>
+          </Section>
+
+          
+          <Section>
+            <SectionHeader
+              title="People"
+            />
+            <div className="px-5 py-4 space-y-4">
+              <div className="flex items-center gap-3">
+                <Avatar name={createdByName} />
+                <div className="min-w-0">
+                  <p className="text-xs text-gray-400 font-medium">Reported by</p>
+                  <p className="text-sm font-semibold text-gray-800 truncate">{createdByName}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                {assignedName ? (
+                  <>
+                    <Avatar name={assignedName} />
+                    <div className="min-w-0">
+                      <p className="text-xs text-gray-400 font-medium">Assigned to</p>
+                      <p className="text-sm font-semibold text-gray-800 truncate">{assignedName}</p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-9 h-9 rounded-full border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-300 text-sm flex-shrink-0">
+                      ?
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400 font-medium">Assigned to</p>
+                      <p className="text-sm text-gray-400 italic">Unassigned</p>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </Section>
+
+       
+          <Section>
+            <SectionHeader
+              title="Details"
+            />
+            <div className="px-5 py-4 divide-y divide-gray-50 text-sm">
+              <div className="py-2.5 flex justify-between items-start gap-2">
+                <span className="text-gray-400 text-xs font-medium flex-shrink-0">Category</span>
+                <span className="text-gray-800 font-medium text-xs text-right">{categoryName}</span>
+              </div>
+              <div className="py-2.5 flex justify-between items-start gap-2">
+                <span className="text-gray-400 text-xs font-medium flex-shrink-0">Created</span>
+                <span className="text-gray-700 text-xs text-right" title={format(new Date(ticket.createdAt), 'PPpp')}>
+                  {formatDistanceToNow(new Date(ticket.createdAt), { addSuffix: true })}
+                </span>
+              </div>
+              <div className="py-2.5 flex justify-between items-start gap-2">
+                <span className="text-gray-400 text-xs font-medium flex-shrink-0">Updated</span>
+                <span className="text-gray-700 text-xs text-right" title={format(new Date(ticket.updatedAt), 'PPpp')}>
+                  {formatDistanceToNow(new Date(ticket.updatedAt), { addSuffix: true })}
+                </span>
+              </div>
+              {ticket.resolvedAt && (
+                <div className="py-2.5 flex justify-between items-start gap-2">
+                  <span className="text-gray-400 text-xs font-medium flex-shrink-0">Resolved</span>
+                  <span className="text-emerald-700 text-xs font-medium text-right">
+                    {format(new Date(ticket.resolvedAt), 'MMM d, yyyy')}
+                  </span>
+                </div>
+              )}
+              {ticket.tags && ticket.tags.length > 0 && (
+                <div className="py-2.5 flex flex-col gap-1.5">
+                  <span className="text-gray-400 text-xs font-medium">Tags</span>
+                  <div className="flex flex-wrap gap-1">
+                    {ticket.tags.map((tag) => (
+                      <span key={tag} className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full border border-gray-200">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </Section>
+
+    
+          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+            <p className="text-sm font-semibold text-gray-900 mb-4">Summary</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-center">
+                <p className="text-2xl font-bold text-gray-900">{comments.length}</p>
+                <p className="mt-1 text-xs text-gray-500">Messages</p>
+              </div>
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-center">
+                <p className="text-2xl font-bold text-gray-900">{activity.length}</p>
+                <p className="mt-1 text-xs text-gray-500">Events</p>
+              </div>
+            </div>
+          </div>
+        </div><div className="grid min-w-0 grid-cols-1 content-start gap-5 lg:grid-cols-2"><Section className="flex h-[500px] min-h-0 min-w-0 flex-col">
             <SectionHeader
               title="Conversation"
               subtitle={`${comments.length} message${comments.length !== 1 ? 's' : ''}`}
-              accentClass="from-blue-50 to-indigo-50"
             />
-            <div className="px-5 py-4 space-y-4">
+            <div
+              ref={conversationRef}
+              onScroll={(event) => {
+                const element = event.currentTarget;
+                shouldStickToLatest.current =
+                  element.scrollHeight - element.scrollTop - element.clientHeight < 48;
+              }}
+              className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-5"
+              aria-label="Conversation messages"
+            >
               {commentsLoading ? (
                 <div className="flex justify-center py-8"><Spinner size="sm" /></div>
               ) : comments.length === 0 ? (
@@ -398,58 +571,66 @@ export const TicketDetailPage: React.FC = () => {
                   <p className="text-sm text-gray-400">No messages yet. Start the conversation below.</p>
                 </div>
               ) : (
-                comments.map((c) => {
-                  const authorRole = typeof c.author === 'object' ? c.author.role : null;
-                  const authorName = typeof c.author === 'object' ? c.author.name : 'Unknown';
-                  const isMe = typeof c.author === 'object' && c.author._id === user?.id;
-                  const isSupport = authorRole === UserRole.AGENT || authorRole === UserRole.ADMIN;
+                <div className="space-y-5">
+                  {orderedComments.map((c) => {
+                    const authorRole = typeof c.author === 'object' ? c.author.role : null;
+                    const authorName = typeof c.author === 'object' ? c.author.name : 'Unknown';
+                    const isMe = typeof c.author === 'object' && c.author._id === user?.id;
+                    const isSupport = authorRole === UserRole.AGENT || authorRole === UserRole.ADMIN;
 
-                  return (
-                    <div key={c._id} className={`flex gap-3 ${isMe ? 'flex-row-reverse' : ''}`}>
-                      <Avatar name={authorName} />
-                      <div className={`flex-1 max-w-[85%] ${isMe ? 'items-end flex flex-col' : ''}`}>
-                        <div className={`flex items-center gap-2 mb-1 flex-wrap ${isMe ? 'justify-end' : ''}`}>
-                          <span className="text-xs font-semibold text-gray-700">{authorName}</span>
-                          {isSupport && !c.isInternal && (
-                            <span className="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full font-medium">Support</span>
-                          )}
-                          {c.isInternal && (
-                            <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-medium">🔒 Internal</span>
-                          )}
-                          <span className="text-[10px] text-gray-400">
-                            {formatDistanceToNow(new Date(c.createdAt), { addSuffix: true })}
-                          </span>
-                          {(isMe || isAdmin) && (
-                            <button
-                              onClick={() => setDeleteCommentId(c._id)}
-                              className="text-[10px] text-red-400 hover:text-red-600 transition-colors ml-1"
-                              title="Delete comment"
-                            >
-                              Delete
-                            </button>
-                          )}
+                    return (
+                      <div key={c._id} className={`flex items-end gap-2.5 ${isMe ? 'justify-end' : 'justify-start'}`}>
+                        {!isMe && <Avatar name={authorName} size="sm" />}
+                        <div className={`flex min-w-0 max-w-[85%] flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                          <div className={`mb-1 flex flex-wrap items-center gap-x-2 gap-y-1 ${isMe ? 'justify-end' : 'justify-start'}`}>
+                            <span className="text-xs font-semibold text-gray-700">{isMe ? 'You' : authorName}</span>
+                            {!isMe && (
+                              <span className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
+                                {isSupport ? 'Support' : 'Incoming'}
+                              </span>
+                            )}
+                            {isSupport && !c.isInternal && (
+                              <span className="rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-700">
+                                {authorRole === UserRole.ADMIN ? 'Admin' : 'Agent'}
+                              </span>
+                            )}
+                            {c.isInternal && (
+                              <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800">Internal note</span>
+                            )}
+                            <span className="text-[10px] text-gray-400">
+                              {format(new Date(c.createdAt), 'MMM d, yyyy · h:mm a')}
+                            </span>
+                            {(isMe || isAdmin) && (
+                              <button
+                                onClick={() => setDeleteCommentId(c._id)}
+                                className="ml-1 text-[10px] font-medium text-red-500 hover:text-red-700"
+                                title="Delete comment"
+                              >
+                                Delete
+                              </button>
+                            )}
+                          </div>
+
+                          <div className={`max-w-full break-words rounded-xl border px-4 py-3 text-sm leading-relaxed ${
+                            c.isInternal
+                              ? 'border-amber-200 bg-amber-50 text-amber-900'
+                              : isMe
+                              ? 'border-blue-600 bg-blue-600 text-white'
+                              : 'border-gray-200 bg-gray-100 text-gray-800'
+                          }`}>
+                            <p className="whitespace-pre-wrap">{c.content}</p>
+                            {c.attachments?.length > 0 && (
+                              <div className="mt-2">
+                                <AttachmentList attachments={c.attachments} compact />
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      
-                        <div className={`rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm border ${
-                          c.isInternal
-                            ? 'bg-amber-50 border-amber-200 text-amber-900 rounded-tl-sm'
-                            : isMe
-                            ? 'bg-blue-600 text-white border-transparent rounded-tr-sm'
-                            : isSupport
-                            ? 'bg-indigo-50 border-indigo-100 text-gray-800 rounded-tl-sm'
-                            : 'bg-gray-50 border-gray-200 text-gray-800 rounded-tl-sm'
-                        }`}>
-                          <p className="whitespace-pre-wrap">{c.content}</p>
-                          {c.attachments?.length > 0 && (
-                            <div className="mt-2">
-                              <AttachmentList attachments={c.attachments} compact />
-                            </div>
-                          )}
-                        </div>
+                        {isMe && <Avatar name={authorName} size="sm" />}
                       </div>
-                    </div>
-                  );
-                })
+                    );
+                  })}
+                </div>
               )}
             </div>
 
@@ -538,14 +719,15 @@ export const TicketDetailPage: React.FC = () => {
               </div>
             )}
           </Section>
-          {activity.length > 0 && (
-            <Section>
+            <Section className="flex h-[500px] min-h-0 min-w-0 flex-col">
               <SectionHeader
                 title="Activity Timeline"
                 subtitle={`${activity.length} event${activity.length !== 1 ? 's' : ''}`}
-                accentClass="from-purple-50 to-violet-50"
               />
-              <div className="px-5 py-4">
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-5">
+                {activity.length === 0 ? (
+                  <p className="py-10 text-center text-sm text-gray-500">No activity recorded yet.</p>
+                ) : (
                 <div className="relative space-y-0">
                   {activity.map((a, idx) => {
                     const actorName = typeof a.actor === 'object' ? a.actor.name : 'Unknown';
@@ -558,7 +740,7 @@ export const TicketDetailPage: React.FC = () => {
                           {!isLast && <div className="w-px flex-1 bg-gray-100 mt-1" />}
                         </div>
                         <div className={`pb-4 flex-1 min-w-0 ${isLast ? '' : ''}`}>
-                          <p className="text-sm text-gray-700 leading-snug">{a.description}</p>
+                          <p className="break-words text-sm leading-snug text-gray-700">{a.description}</p>
                           <div className="flex items-center gap-1.5 mt-1">
                             <Avatar name={actorName} size="sm" />
                             <span className="text-xs text-gray-400">{actorName}</span>
@@ -570,182 +752,10 @@ export const TicketDetailPage: React.FC = () => {
                     );
                   })}
                 </div>
-              </div>
-            </Section>
-          )}
-        </div>
-
-       
-        <div className="space-y-4">
-          <Section>
-            <SectionHeader
-              title="Ticket Details"
-              accentClass="from-slate-50 to-gray-50"
-            />
-            <div className="px-5 py-4 space-y-4">
-
-              <div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Status</p>
-                {transitionStatuses.length > 0 ? (
-                  <div className="relative">
-                    <select
-                      value={ticket.status}
-                      onChange={(e) => updateStatusMutation.mutate(e.target.value)}
-                      disabled={updateStatusMutation.isPending}
-                      className="w-full appearance-none text-sm font-semibold border border-gray-200 rounded-xl px-3 py-2 pr-8 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 cursor-pointer"
-                    >
-                      {statusOptions.map((o) => (
-                        <option key={o.value} value={o.value}>{o.label}</option>
-                      ))}
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center">
-                      {updateStatusMutation.isPending
-                        ? <span className="w-3.5 h-3.5 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin" />
-                        : <svg className="w-3.5 h-3.5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
-                          </svg>
-                      }
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <StatusBadge status={ticket.status} />
-                    <span className="text-[10px] text-gray-400 italic">no transitions available</span>
-                  </div>
                 )}
               </div>
-
-             
-              <div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Priority</p>
-                {(isAdmin || isAgent) && ticket.status !== TicketStatus.CLOSED ? (
-                  <div className="relative">
-                    <select
-                      value={ticket.priority}
-                      onChange={(e) => updatePriorityMutation.mutate(e.target.value)}
-                      disabled={updatePriorityMutation.isPending}
-                      className="w-full appearance-none text-sm font-semibold border border-gray-200 rounded-xl px-3 py-2 pr-8 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 cursor-pointer"
-                    >
-                      {priorityOptions.map((o) => (
-                        <option key={o.value} value={o.value}>{o.label}</option>
-                      ))}
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center">
-                      {updatePriorityMutation.isPending
-                        ? <span className="w-3.5 h-3.5 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin" />
-                        : <svg className="w-3.5 h-3.5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
-                          </svg>
-                      }
-                    </div>
-                  </div>
-                ) : (
-                  <PriorityBadge priority={ticket.priority} />
-                )}
-              </div>
-
-            </div>
-          </Section>
-
-          
-          <Section>
-            <SectionHeader
-              title="People"
-              accentClass="from-indigo-50 to-blue-50"
-            />
-            <div className="px-5 py-4 space-y-4">
-              <div className="flex items-center gap-3">
-                <Avatar name={createdByName} />
-                <div className="min-w-0">
-                  <p className="text-xs text-gray-400 font-medium">Reported by</p>
-                  <p className="text-sm font-semibold text-gray-800 truncate">{createdByName}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                {assignedName ? (
-                  <>
-                    <Avatar name={assignedName} />
-                    <div className="min-w-0">
-                      <p className="text-xs text-gray-400 font-medium">Assigned to</p>
-                      <p className="text-sm font-semibold text-gray-800 truncate">{assignedName}</p>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="w-9 h-9 rounded-full border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-300 text-sm flex-shrink-0">
-                      ?
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-400 font-medium">Assigned to</p>
-                      <p className="text-sm text-gray-400 italic">Unassigned</p>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-          </Section>
-
-       
-          <Section>
-            <SectionHeader
-              title="Details"
-              accentClass="from-emerald-50 to-teal-50"
-            />
-            <div className="px-5 py-4 divide-y divide-gray-50 text-sm">
-              <div className="py-2.5 flex justify-between items-start gap-2">
-                <span className="text-gray-400 text-xs font-medium flex-shrink-0">Category</span>
-                <span className="text-gray-800 font-medium text-xs text-right">{categoryName}</span>
-              </div>
-              <div className="py-2.5 flex justify-between items-start gap-2">
-                <span className="text-gray-400 text-xs font-medium flex-shrink-0">Created</span>
-                <span className="text-gray-700 text-xs text-right" title={format(new Date(ticket.createdAt), 'PPpp')}>
-                  {formatDistanceToNow(new Date(ticket.createdAt), { addSuffix: true })}
-                </span>
-              </div>
-              <div className="py-2.5 flex justify-between items-start gap-2">
-                <span className="text-gray-400 text-xs font-medium flex-shrink-0">Updated</span>
-                <span className="text-gray-700 text-xs text-right" title={format(new Date(ticket.updatedAt), 'PPpp')}>
-                  {formatDistanceToNow(new Date(ticket.updatedAt), { addSuffix: true })}
-                </span>
-              </div>
-              {ticket.resolvedAt && (
-                <div className="py-2.5 flex justify-between items-start gap-2">
-                  <span className="text-gray-400 text-xs font-medium flex-shrink-0">Resolved</span>
-                  <span className="text-emerald-700 text-xs font-medium text-right">
-                    {format(new Date(ticket.resolvedAt), 'MMM d, yyyy')}
-                  </span>
-                </div>
-              )}
-              {ticket.tags && ticket.tags.length > 0 && (
-                <div className="py-2.5 flex flex-col gap-1.5">
-                  <span className="text-gray-400 text-xs font-medium">Tags</span>
-                  <div className="flex flex-wrap gap-1">
-                    {ticket.tags.map((tag) => (
-                      <span key={tag} className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full border border-gray-200">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </Section>
-
-    
-          <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 p-4 text-white shadow-lg">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">Summary</p>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white/5 rounded-xl p-3 text-center">
-                <p className="text-2xl font-bold">{comments.length}</p>
-                <p className="text-[10px] text-slate-400 mt-0.5">Messages</p>
-              </div>
-              <div className="bg-white/5 rounded-xl p-3 text-center">
-                <p className="text-2xl font-bold">{activity.length}</p>
-                <p className="text-[10px] text-slate-400 mt-0.5">Events</p>
-              </div>
-            </div>
-          </div>
-        </div>
+            </Section></div>
+        
       </div>
 
       <ConfirmDialog
