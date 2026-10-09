@@ -8,10 +8,9 @@ import { categoryService } from '../../services/category.service';
 import { type Category } from '../../types';
 import { Spinner } from '../../components/shared/Spinner';
 import { Modal } from '../../components/shared/Modal';
-import { ConfirmDialog } from '../../components/shared/ConfirmDialog';
 import { ErrorState } from '../../components/shared/ErrorState';
 import { getAxiosErrorMessage } from '../../lib/utils';
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil } from "lucide-react";
 
 const schema = z.object({
     name: z.string().trim().min(2, 'Name must be at least 2 characters').max(100, 'Name cannot exceed 100 characters'),
@@ -23,7 +22,6 @@ export const CategoriesPage: React.FC = () => {
     const qc = useQueryClient();
     const [showModal, setShowModal] = useState(false);
     const [editing, setEditing] = useState<Category | null>(null);
-    const [deleteTarget, setDeleteTarget] = useState<Category | null>(null);
 
     const { data: categories = [], isLoading, isError, error, refetch } = useQuery({
         queryKey: ['categories'],
@@ -56,12 +54,6 @@ export const CategoriesPage: React.FC = () => {
         onError: (err) => toast.error(getAxiosErrorMessage(err)),
     });
 
-    const deleteMutation = useMutation({
-        mutationFn: (id: string) => categoryService.deleteCategory(id),
-        onSuccess: () => { toast.success('Category deleted'); setDeleteTarget(null); invalidate(); },
-        onError: (err) => toast.error(getAxiosErrorMessage(err)),
-    });
-
     const openEdit = (cat: Category) => {
         setEditing(cat);
         reset({ name: cat.name, description: cat.description ?? '' });
@@ -84,7 +76,10 @@ export const CategoriesPage: React.FC = () => {
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between flex-wrap gap-3">
-                <h1 className="text-2xl font-bold text-gray-900">Categories</h1>
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900">Categories</h1>
+                    <p className="mt-1 text-sm text-gray-500">Inactive categories and their tickets are hidden from customers and agents.</p>
+                </div>
                 <button onClick={openCreate} className="btn-primary">Add Category</button>
             </div>
 
@@ -146,14 +141,6 @@ export const CategoriesPage: React.FC = () => {
                                                     />
                                                 </button>
 
-                                                <button
-                                                    onClick={() => setDeleteTarget(cat)}
-                                                    aria-label={`Delete ${cat.name}`}
-                                                    title="Delete category"
-                                                    className="text-xs text-white p-2 rounded-md bg-red-600 hover:bg-red-700 flex items-center gap-1"
-                                                >
-                                                    <Trash2 size={14} />
-                                                </button>
                                             </div>
                                         </td>
                                     </tr>
@@ -191,16 +178,6 @@ export const CategoriesPage: React.FC = () => {
                 </form>
             </Modal>
 
-            <ConfirmDialog
-                isOpen={!!deleteTarget}
-                onClose={() => setDeleteTarget(null)}
-                onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget._id)}
-                title="Delete Category"
-                message={`Delete "${deleteTarget?.name}"? This cannot be undone.`}
-                confirmLabel="Delete"
-                isDestructive
-                isLoading={deleteMutation.isPending}
-            />
         </div>
     );
 };

@@ -7,6 +7,7 @@ import { StatusBadge, PriorityBadge } from '../../components/shared/Badges';
 import { Spinner } from '../../components/shared/Spinner';
 import { ErrorState } from '../../components/shared/ErrorState';
 import { format } from 'date-fns';
+import { ArrowRight, CheckCircle2, CircleDot, Clock3, Ticket, UserRoundCheck } from 'lucide-react';
 
 export const AgentDashboard: React.FC = () => {
   const { data, isLoading, isError, error, refetch } = useQuery({
@@ -26,33 +27,68 @@ export const AgentDashboard: React.FC = () => {
   }
 
   const stats = data?.stats;
+  const metricCards = [
+    { label: 'Assigned to me', value: stats?.assigned ?? 0, color: 'text-violet-600', iconBackground: 'bg-violet-50', icon: <UserRoundCheck className="h-5 w-5" />, state: { filters: { status: 'ASSIGNED' } } },
+    { label: 'Open', value: stats?.open ?? 0, color: 'text-blue-600', iconBackground: 'bg-blue-50', icon: <CircleDot className="h-5 w-5" />, state: { filters: { status: 'OPEN' } } },
+    { label: 'In progress', value: stats?.inProgress ?? 0, color: 'text-amber-600', iconBackground: 'bg-amber-50', icon: <Clock3 className="h-5 w-5" />, state: { filters: { status: 'IN_PROGRESS' } } },
+    { label: 'Waiting for user', value: stats?.waitingForUser ?? 0, color: 'text-orange-600', iconBackground: 'bg-orange-50', icon: <Clock3 className="h-5 w-5" />, state: { filters: { status: 'WAITING_FOR_USER' } } },
+    { label: 'Resolved', value: stats?.resolved ?? 0, color: 'text-emerald-600', iconBackground: 'bg-emerald-50', icon: <CheckCircle2 className="h-5 w-5" />, state: { filters: { status: 'RESOLVED' } } },
+  ];
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Agent Dashboard</h1>
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <StatCard link="/tickets" label="Assigned" value={stats?.assigned ?? 0} color="text-purple-600" state={{ filters: { status: 'ASSIGNED' } }} />
-        <StatCard link="/tickets" label="Open" value={stats?.open ?? 0} color="text-blue-600" state={{ filters: { status: 'OPEN' } }} />
-        <StatCard link="/tickets" label="In Progress" value={stats?.inProgress ?? 0} color="text-yellow-600" state={{ filters: { status: 'IN_PROGRESS' } }} />
-        <StatCard link="/tickets" label="Waiting" value={stats?.waitingForUser ?? 0} color="text-orange-600" state={{ filters: { status: 'WAITING_FOR_USER' } }} />
-        <StatCard link="/tickets" label="Resolved" value={stats?.resolved ?? 0} color="text-green-600" state={{ filters: { status: 'RESOLVED' } }} />
-      </div>
+    <div className="space-y-8">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">Agent dashboard</h1>
+        </div>
+        <Link to="/tickets/available" className="btn-primary inline-flex items-center gap-2 self-start sm:self-auto">
+          <Ticket className="h-4 w-4" />
+          available tickets
+        </Link>
+      </header>
 
-      <div className="card">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">Recent Tickets</h2>
-          <Link to="/tickets" className="text-sm text-blue-600 hover:underline">View all</Link>
+      <section aria-label="Assigned ticket totals" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        {metricCards.map((metric) => (
+          <StatCard
+            key={metric.label}
+            link="/tickets"
+            label={metric.label}
+            value={metric.value}
+            color={metric.color}
+            iconBackground={metric.iconBackground}
+            icon={metric.icon}
+            state={metric.state}
+          />
+        ))}
+      </section>
+
+      <section className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="flex items-center justify-between gap-4 border-b border-gray-100 px-5 py-4 sm:px-6">
+          <div>
+            <h2 className="font-semibold text-gray-900">Recent tickets</h2>
+            <p className="mt-1 text-sm text-gray-500">Latest activity on tickets assigned to you</p>
+          </div>
+          <Link to="/tickets" className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700">
+            View all <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
         {!data?.recentTickets?.length ? (
-          <p className="text-gray-500 text-sm py-4 text-center">No assigned tickets.</p>
+          <div className="px-5 py-12 text-center sm:px-6">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-gray-500">
+              <Ticket className="h-6 w-6" />
+            </div>
+            <p className="mt-3 font-medium text-gray-900">No assigned tickets</p>
+            <p className="mt-1 text-sm text-gray-500">Pick up an available ticket to start helping customers.</p>
+            <Link to="/tickets/available" className="btn-primary mt-4">Browse available tickets</Link>
+          </div>
         ) : (
           <div className="divide-y divide-gray-100">
             {data.recentTickets.map((t) => (
-              <Link key={t._id} to={`/tickets/${t._id}`} className="flex items-center justify-between py-3 hover:bg-gray-50 px-2 rounded transition-colors">
+              <Link key={t._id} to={`/tickets/${t._id}`} className="flex flex-col gap-3 px-5 py-4 transition hover:bg-gray-50 sm:flex-row sm:items-center sm:justify-between sm:px-6">
                 <div>
                   <p className="text-sm font-medium text-gray-900">{t.subject}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    {typeof t.createdBy === 'object' ? t.createdBy.name : 'Unknown'} · {format(new Date(t.updatedAt), 'MMM d, yyyy')}
+                  <p className="mt-1 text-xs text-gray-500">
+                    {typeof t.createdBy === 'object' ? t.createdBy.name : 'Unknown'} <span className="mx-1.5 text-gray-300">·</span> Updated {format(new Date(t.updatedAt), 'MMM d, yyyy')}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -63,9 +99,7 @@ export const AgentDashboard: React.FC = () => {
             ))}
           </div>
         )}
-      </div>
-
-      <Link to="/tickets/available" className="btn-primary inline-flex">View Available Tickets</Link>
+      </section>
     </div>
   );
 };

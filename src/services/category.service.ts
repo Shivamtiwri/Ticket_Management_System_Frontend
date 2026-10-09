@@ -26,7 +26,4 @@ export const categoryService = {
     const { data } = await apiClient.patch<ApiResponse<Category>>(`/categories/${id}/toggle-status`);
     return data.data;
   },
-  async deleteCategory(id: string) {
-    await apiClient.delete(`/categories/${id}`);
-  },
 };
