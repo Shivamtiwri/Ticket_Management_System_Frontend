@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
-import { Link, useSearchParams, useLocation } from 'react-router-dom';
+import { Link, useSearchParams, useLocation, useNavigate } from 'react-router-dom';
 import { ticketService } from '../../services/ticket.service';
 import { useAuth } from '../../context/AuthContext';
 import { UserRole, TicketStatus, type TicketFilters } from '../../types';
@@ -16,6 +16,7 @@ export const TicketListPage: React.FC = () => {
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
+   const navigate = useNavigate();
   const [filters, setFilters] = useState<TicketFilters>(() => {
     const status = searchParams.get('status') as TicketStatus | null;
     const priority = searchParams.get('priority') as any;
@@ -24,6 +25,7 @@ export const TicketListPage: React.FC = () => {
     const sortBy = searchParams.get('sortBy') as any;
     const page = searchParams.get('page');
     const limit = searchParams.get('limit');
+   
 
     const initialFilters: TicketFilters = { page: 1, limit: 10 };
 
@@ -114,12 +116,10 @@ export const TicketListPage: React.FC = () => {
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {data.data.map((ticket) => (
-                    <tr key={ticket._id} className="hover:bg-gray-50 transition-colors">
+                    <tr onClick={() => navigate(`/tickets/${ticket._id}`)} key={ticket._id} className="hover:bg-gray-50 transition-colors cursor-pointer">
                       <td className="px-4 py-3">
-                        <Link to={`/tickets/${ticket._id}`} className="hover:text-blue-600 transition-colors">
-                          <p className="font-medium text-gray-900 line-clamp-1">{ticket.subject}</p>
+                        <p className="font-medium text-gray-900 line-clamp-1">{ticket.subject}</p>
                           <p className="text-xs text-gray-400 mt-0.5">{ticket.ticketId}</p>
-                        </Link>
                       </td>
                       <td className="px-4 py-3 text-gray-600">
                         {typeof ticket?.category === 'object' ? ticket?.category?.name : ticket?.category}
